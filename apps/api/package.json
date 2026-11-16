@@ -7,9 +7,11 @@
     "dev": "PRECOS_PATH=../../config/precos.json tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
+    "admin:criar": "node dist/cli/criar-admin.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.5",
     "@fastify/cors": "^11.4.3",
     "@tapete/core": "*",
     "fastify": "^5.12.8",

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { api } from "./api";
+import { api, type Usuario } from "./api";
 
-export function Login() {
+export function Login({ onEntrar }: { onEntrar: (u: Usuario) => void }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState<string | null>(null);
@@ -13,8 +13,9 @@ export function Login() {
     setEnviando(true);
     try {
       const res = await api("/admin/api/login", { method: "POST", body: JSON.stringify({ email, senha }) });
-      if (res.status === 404) setErro("O login ainda não está disponível nesta versão.");
-      else if (!res.ok) setErro("E-mail ou senha inválidos.");
+      if (res.ok) return onEntrar((await res.json()) as Usuario);
+      if (res.status === 429) setErro("Muitas tentativas. Tente novamente em 15 minutos.");
+      else setErro("E-mail ou senha inválidos.");
     } catch {
       setErro("Não foi possível conectar ao servidor.");
     } finally {

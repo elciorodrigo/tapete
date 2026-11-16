@@ -108,6 +108,92 @@ button:disabled {
   font-size: 14px;
 }
 
+.painel {
+  min-height: 100vh;
+  background: #f8f7f3;
+}
+
+.painel-topo {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  height: 64px;
+  padding: 0 28px;
+  background: var(--navy);
+  color: #fff;
+}
+
+.painel-topo img {
+  height: 34px;
+  width: auto;
+}
+
+.painel-topo nav a {
+  color: rgb(255 255 255 / 0.75);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 6px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.painel-topo nav a.ativo {
+  color: #fff;
+  border-color: var(--agua);
+}
+
+.painel-usuario {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.botao-sair {
+  padding: 7px 16px;
+  margin: 0;
+  background: transparent;
+  border: 1.5px solid rgb(255 255 255 / 0.4);
+  font-size: 14px;
+}
+
+.botao-sair:hover:not(:disabled) {
+  background: transparent;
+  border-color: var(--agua);
+}
+
+.painel-conteudo {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 28px;
+}
+
+.painel-conteudo h1 {
+  margin: 0 0 20px;
+  color: var(--navy);
+  font-size: 26px;
+}
+
+.vazio {
+  background: #fff;
+  border: 1px solid #e3e6e8;
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #556677;
+}
+
+.vazio p {
+  margin: 0;
+}
+
+.vazio-titulo {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--navy);
+  margin-bottom: 6px !important;
+}
+
 .voltar {
   color: rgb(255 255 255 / 0.75);
   font-size: 14px;

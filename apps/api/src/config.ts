@@ -13,4 +13,5 @@ export const config = {
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean),
+  cookieSecure: process.env.COOKIE_SECURE !== "false",
 };
