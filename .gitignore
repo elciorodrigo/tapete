@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.log
+
+infra/.env
+infra/keys/*
+!infra/keys/.gitkeep
+*.pem
+.DS_Store
+.astro/

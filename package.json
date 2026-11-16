@@ -1,0 +1,20 @@
+{
+  "name": "tapete",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "npm run build -w @tapete/core && npm run build -w @tapete/api && npm run build -w @tapete/admin && npm run build -w @tapete/site",
+    "dev:api": "npm run build -w @tapete/core && npm run dev -w @tapete/api",
+    "dev:admin": "npm run dev -w @tapete/admin",
+    "dev:site": "npm run dev -w @tapete/site",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run build -w @tapete/core && npm run typecheck -w @tapete/core -w @tapete/api -w @tapete/admin -w @tapete/site"
+  }
+}

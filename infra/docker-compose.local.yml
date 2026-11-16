@@ -1,0 +1,15 @@
+# Só para rodar no computador: publica as portas e aponta o site para a API local.
+# docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+services:
+  tapete-api:
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      WEB_ORIGINS: http://localhost:8080
+
+  tapete-web:
+    build:
+      args:
+        API_PUBLIC_URL: http://localhost:3000
+    ports:
+      - "127.0.0.1:8080:80"

@@ -1,0 +1,65 @@
+---
+type Nome = "tapete" | "sofa" | "cortina" | "colchao" | "gota" | "escudo" | "folha" | "estrela" | "whatsapp";
+
+interface Props {
+  nome: Nome;
+  tamanho?: number;
+}
+
+const { nome, tamanho = 28 } = Astro.props;
+---
+
+<svg
+  width={tamanho}
+  height={tamanho}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.6"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  {nome === "tapete" && (
+    <>
+      <rect x="4" y="3" width="16" height="18" rx="1.5" />
+      <rect x="7" y="6" width="10" height="12" rx="0.5" />
+      <path d="M10 12h4M12 10v4" />
+    </>
+  )}
+  {nome === "sofa" && (
+    <>
+      <path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3" />
+      <path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v4H3z" />
+      <path d="M5 17v2M19 17v2" />
+    </>
+  )}
+  {nome === "cortina" && (
+    <>
+      <path d="M3 4h18" />
+      <path d="M5 4c0 6 1 10 3 16M19 4c0 6-1 10-3 16" />
+      <path d="M8 20h-3M16 20h3M9 4c0 5 .5 9 1.5 12M15 4c0 5-.5 9-1.5 12" />
+    </>
+  )}
+  {nome === "colchao" && (
+    <>
+      <rect x="3" y="7" width="18" height="10" rx="2" />
+      <path d="M3 11h18M7 7v4M12 7v4M17 7v4" />
+    </>
+  )}
+  {nome === "gota" && <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />}
+  {nome === "escudo" && <path d="M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z" />}
+  {nome === "folha" && (
+    <>
+      <path d="M5 19c0-9 5-14 15-15-1 10-6 15-15 15z" />
+      <path d="M5 19l8-8" />
+    </>
+  )}
+  {nome === "estrela" && <path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />}
+  {nome === "whatsapp" && (
+    <>
+      <path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z" />
+      <path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 1c-1-.5-1.5-1-2-2l1-1-1-2z" />
+    </>
+  )}
+</svg>

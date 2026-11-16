@@ -1,0 +1,168 @@
+---
+import Icone from "../components/Icone.astro";
+import Base from "../layouts/Base.astro";
+
+const whatsapp = (import.meta.env.PUBLIC_WHATSAPP ?? "").replace(/\D/g, "");
+const linkWhatsapp = whatsapp
+  ? `https://wa.me/${whatsapp}?text=${encodeURIComponent("Olá! Quero fazer um orçamento de lavagem de tapete.")}`
+  : "#orcamento";
+
+const servicos = [
+  { icone: "tapete", nome: "Tapetes", texto: "Sintéticos, naturais, persas e shaggy. Lavagem profunda com secagem controlada.", ativo: true },
+  { icone: "sofa", nome: "Estofados", texto: "Sofás, poltronas e cadeiras higienizados no seu endereço.", ativo: false },
+  { icone: "cortina", nome: "Cortinas", texto: "Retirada, lavagem e reinstalação com cuidado com cada tecido.", ativo: false },
+  { icone: "colchao", nome: "Colchões", texto: "Higienização e tratamento contra ácaros para um sono mais saudável.", ativo: false },
+] as const;
+
+const passos = [
+  { titulo: "Orçamento na hora", texto: "Informe o CEP, o tipo e as medidas do tapete. O valor sai na mesma conversa." },
+  { titulo: "Coleta em casa", texto: "Escolha o período e a nossa equipe busca o tapete identificado com etiqueta." },
+  { titulo: "Higienização profissional", texto: "Lavagem adequada a cada fibra, com conferência peça por peça na unidade." },
+  { titulo: "Entrega", texto: "Seu tapete volta limpo, seco e pronto para usar. Você acompanha cada etapa." },
+];
+
+const valores = [
+  { icone: "gota", titulo: "Lavanderia profissional", texto: "Resultados visíveis e duradouros." },
+  { icone: "escudo", titulo: "Cuidado com os seus têxteis", texto: "Mais higiene e bem-estar no dia a dia." },
+  { icone: "folha", titulo: "Ambientes mais saudáveis", texto: "Qualidade de vida para você e sua família." },
+  { icone: "estrela", titulo: "Experiência e confiança", texto: "Excelência em cada detalhe do processo." },
+] as const;
+
+const ano = new Date().getFullYear();
+---
+
+<Base
+  title="Tapetê – Lavanderia Profissional | Lavagem de tapetes com coleta e entrega"
+  description="Higienização profissional de tapetes com coleta e entrega. Faça seu orçamento em minutos pelo WhatsApp."
+>
+  <header class="topo">
+    <div class="container topo-linha">
+      <a href="/" class="topo-logo" aria-label="Tapetê – início">
+        <img src="/logo-marca.png" alt="Tapetê" width="112" height="40" />
+      </a>
+      <nav class="topo-nav" aria-label="Principal">
+        <a href="#servicos">Serviços</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#orcamento">Orçamento</a>
+      </nav>
+      <a href="/admin/" class="botao botao-contorno botao-pequeno">Entrar</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-conteudo">
+        <img class="hero-logo" src="/logo.png" alt="Tapetê – Lavanderia Profissional" width="320" height="160" />
+        <h1>Tapetes limpos de verdade, sem sair de casa.</h1>
+        <p class="hero-sub">
+          Higienização profissional com coleta e entrega. Faça seu orçamento em minutos pelo WhatsApp.
+        </p>
+        <div class="hero-acoes">
+          <a href={linkWhatsapp} class="botao botao-agua" rel="noopener">
+            <Icone nome="whatsapp" tamanho={22} /> Pedir orçamento no WhatsApp
+          </a>
+          <a href="#como-funciona" class="botao botao-contorno">Como funciona</a>
+        </div>
+      </div>
+      <svg class="hero-onda" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 70 C 320 10, 620 120, 960 60 S 1320 30, 1440 50 V120 H0Z" fill="#0073a6" opacity=".35" />
+        <path d="M0 90 C 360 40, 700 130, 1040 80 S 1360 60, 1440 75 V120 H0Z" fill="#35cde3" opacity=".35" />
+        <path d="M0 100 C 380 70, 760 130, 1100 95 S 1380 85, 1440 95 V120 H0Z" fill="#f8f7f3" />
+      </svg>
+    </section>
+
+    <section id="servicos" class="secao">
+      <div class="container">
+        <p class="sobretitulo">Serviços</p>
+        <h2>Cuidado especializado para cada têxtil</h2>
+        <div class="grade grade-4">
+          {
+            servicos.map((s) => (
+              <article class:list={["cartao", { "cartao-inativo": !s.ativo }]}>
+                <span class="cartao-icone">
+                  <Icone nome={s.icone} />
+                </span>
+                <h3>
+                  {s.nome}
+                  <span class:list={["selo", s.ativo ? "selo-ativo" : "selo-breve"]}>
+                    {s.ativo ? "Disponível" : "Em breve"}
+                  </span>
+                </h3>
+                <p>{s.texto}</p>
+              </article>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section id="como-funciona" class="secao secao-branca">
+      <div class="container">
+        <p class="sobretitulo">Como funciona</p>
+        <h2>Do orçamento à entrega, sem complicação</h2>
+        <ol class="passos">
+          {
+            passos.map((p, i) => (
+              <li>
+                <span class="passo-numero">{i + 1}</span>
+                <h3>{p.titulo}</h3>
+                <p>{p.texto}</p>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </section>
+
+    <section class="secao">
+      <div class="container">
+        <p class="sobretitulo">Por que a Tapetê</p>
+        <h2>Têxteis mais limpos para uma vida melhor</h2>
+        <div class="grade grade-4 valores">
+          {
+            valores.map((v) => (
+              <div class="valor">
+                <Icone nome={v.icone} tamanho={34} />
+                <h3>{v.titulo}</h3>
+                <p>{v.texto}</p>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section id="orcamento" class="secao secao-colada">
+      <div class="container">
+        <div class="orcamento">
+          <div>
+            <p class="sobretitulo sobretitulo-claro">Orçamento</p>
+            <h2>Quanto custa lavar o seu tapete?</h2>
+            <p>
+              Pelo WhatsApp você informa o CEP, o tipo e as medidas e recebe o valor na hora, já com a coleta agendada.
+              Em breve também será possível fazer o orçamento por aqui.
+            </p>
+          </div>
+          <a href={linkWhatsapp} class="botao botao-agua" rel="noopener">
+            <Icone nome="whatsapp" tamanho={22} /> Fazer orçamento agora
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <div class="container rodape-linha">
+      <div>
+        <img src="/logo-marca.png" alt="Tapetê" width="98" height="35" />
+        <p>Lavanderia Profissional</p>
+      </div>
+      <nav aria-label="Rodapé">
+        <a href="#servicos">Serviços</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="/admin/">Área da equipe</a>
+      </nav>
+    </div>
+    <p class="container rodape-copy">© {ano} Tapetê – Lavanderia Profissional</p>
+  </footer>
+</Base>

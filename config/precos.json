@@ -1,0 +1,27 @@
+{
+  "marca": "Tapetê",
+  "termos_url": "https://tapete.solucoesdigitais.io/termos",
+  "unidades": [
+    {
+      "id": "moema",
+      "nome": "Tapetê – Moema",
+      "endereco_loja": "Av. Ibirapuera, 1000 – Moema",
+      "aceita_balcao": true,
+      "ceps": [["04000-000", "04099-999"], ["04500-000", "04599-999"]],
+      "taxa_coleta": 20.0,
+      "pedido_minimo": 80.0,
+      "area_minima_m2": 1.0,
+      "arredondamento_m": 0.1,
+      "tipos": [
+        { "id": "tap_sint", "nome": "Sintético", "preco_m2": 25.0 },
+        { "id": "tap_nat", "nome": "Natural (lã, algodão, sisal)", "preco_m2": 38.0 },
+        { "id": "tap_persa", "nome": "Persa / artesanal", "preco_m2": 55.0 },
+        { "id": "tap_shaggy", "nome": "Shaggy (pelo alto)", "preco_m2": 32.0 }
+      ],
+      "adicionais": [
+        { "id": "impermeabilizacao", "nome": "Impermeabilização", "preco_m2": 12.0 },
+        { "id": "antiacaro", "nome": "Tratamento antiácaro", "preco_m2": 6.0 }
+      ]
+    }
+  ]
+}
