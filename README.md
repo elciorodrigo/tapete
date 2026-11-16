@@ -57,17 +57,3 @@ Os dois com certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos fic
 ### Banco de dados
 
 O PostgreSQL grava os dados numa pasta do disco da VPS (`POSTGRES_DATA_DIR`, padrão `infra/data/postgres`). Os dados sobrevivem a `docker compose down`, à recriação dos containers e à atualização da imagem. O banco não publica porta; só a API o acessa, pela rede interna.
-
-Backup diário com `infra/backup.sh` (dump compactado em `BACKUP_DIR`, mantém `BACKUP_DIAS` dias). No cron da VPS:
-
-```bash
-0 3 * * * /caminho/para/app/infra/backup.sh >> /caminho/para/app/infra/backups/backup.log 2>&1
-```
-
-Restaurar um backup:
-
-```bash
-gunzip -c backups/tapete-AAAAMMDD-HHMMSS.sql.gz | docker exec -i tapete-db psql -U tapete -d tapete
-```
-
-Para ter cópia fora da VPS, sincronize a pasta `backups/` com outro lugar (outro servidor ou armazenamento em nuvem).
