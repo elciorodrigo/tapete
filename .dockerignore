@@ -1,4 +1,8 @@
 **/node_modules
 **/dist
+**/.astro
 infra
+.git
+.env
+*.env
 *.pem
