@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-const faixaCep = z.tuple([z.string(), z.string()]);
+const cep = z.string().trim().regex(/^\d{5}-?\d{3}$/, "CEP inválido (use 00000-000)");
+const faixaCep = z
+  .tuple([cep, cep])
+  .refine(([a, b]) => a.replace("-", "") <= b.replace("-", ""), "o CEP inicial deve ser menor que o final");
 
 const itemPreco = z.object({
   id: z.string().min(1),

@@ -9,9 +9,11 @@ COPY apps/api/package.json apps/api/
 COPY apps/admin/package.json apps/admin/
 COPY apps/site/package.json apps/site/
 RUN npm ci
+COPY packages/core packages/core
 COPY apps/admin apps/admin
 COPY apps/site apps/site
-RUN VITE_API_URL=$API_PUBLIC_URL npm run build -w @tapete/admin \
+RUN npm run build -w @tapete/core \
+ && VITE_API_URL=$API_PUBLIC_URL npm run build -w @tapete/admin \
  && PUBLIC_WHATSAPP=$WHATSAPP_NUMERO npm run build -w @tapete/site
 
 FROM nginx:1.29-alpine

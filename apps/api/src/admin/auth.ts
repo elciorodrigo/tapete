@@ -124,5 +124,5 @@ export async function rotasAuth(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/admin/api/me", { preHandler: exigirSessao }, async (req) => req.usuario);
+  app.get("/admin/api/me", { onRequest: exigirSessao }, async (req) => req.usuario);
 }

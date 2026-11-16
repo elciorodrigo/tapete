@@ -96,6 +96,11 @@ describe("calcularOrcamento", () => {
     expect(o.total).toBe(8000);
   });
 
+  it("recusa item malformado", () => {
+    expect(() => calcularOrcamento([{ tipo: "tap_sint" }], unidade, "coleta")).toThrow(/Tapete 1/);
+    expect(() => calcularOrcamento([{ tipo: "tap_sint", medidas: { formato: "oval" } }], unidade, "coleta")).toThrow(ErroOrcamento);
+  });
+
   it("recusa pedido vazio e balcão em unidade sem balcão", () => {
     expect(() => calcularOrcamento([], unidade, "coleta")).toThrow(ErroOrcamento);
     expect(() => calcularOrcamento([ret(2, 3)], { ...unidade, aceita_balcao: false }, "balcao")).toThrow(ErroOrcamento);

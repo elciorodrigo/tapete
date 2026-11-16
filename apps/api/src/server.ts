@@ -2,6 +2,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { rotasAuth } from "./admin/auth.js";
+import { rotasPrecos } from "./admin/precos.js";
 import { carregarCatalogo, catalogo } from "./catalogo.js";
 import { config } from "./config.js";
 import { pool } from "./db.js";
@@ -9,9 +10,9 @@ import { migrar } from "./migracoes.js";
 
 const app = Fastify({ logger: true, trustProxy: true, bodyLimit: 1024 * 1024 });
 
-carregarCatalogo(config.precosPath, app.log);
 const aplicadas = await migrar(pool);
 if (aplicadas.length) app.log.info({ aplicadas }, "migrações aplicadas");
+await carregarCatalogo(config.precosPath, app.log);
 
 await app.register(cors, {
   origin: config.webOrigins,
@@ -20,6 +21,7 @@ await app.register(cors, {
 });
 await app.register(cookie);
 await app.register(rotasAuth);
+await app.register(rotasPrecos);
 
 app.get("/", async () => ({ servico: "tapete-api" }));
 

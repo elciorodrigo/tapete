@@ -28,6 +28,17 @@ const MIGRACOES: { id: string; sql: string }[] = [
       create index admin_sessions_user_id on admin_sessions(user_id);
     `,
   },
+  {
+    id: "002_catalogo",
+    sql: `
+      create table catalog_versions (
+        id          bigserial primary key,
+        data        jsonb not null,
+        created_by  bigint references admin_users(id) on delete set null,
+        created_at  timestamptz not null default now()
+      );
+    `,
+  },
 ];
 
 export async function migrar(pool: Pool): Promise<string[]> {

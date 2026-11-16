@@ -1,5 +1,15 @@
+import { z } from "zod";
 import type { Unidade } from "./catalogo.js";
 import { paraCentavos, type Centavos } from "./dinheiro.js";
+
+export const itemPedidoSchema = z.object({
+  tipo: z.string().min(1),
+  medidas: z.discriminatedUnion("formato", [
+    z.object({ formato: z.literal("retangular"), largura: z.number(), comprimento: z.number() }),
+    z.object({ formato: z.literal("redondo"), diametro: z.number() }),
+  ]),
+  adicionais: z.array(z.string()).max(20).default([]),
+});
 
 export type Medidas =
   | { formato: "retangular"; largura: number; comprimento: number }
@@ -82,8 +92,13 @@ export function calcularItem(item: ItemPedido, unidade: Unidade): ItemCalculado 
   };
 }
 
-export function calcularOrcamento(itens: ItemPedido[], unidade: Unidade, modalidade: Modalidade): Orcamento {
-  if (itens.length === 0) throw new ErroOrcamento("Nenhum tapete no pedido");
+export function calcularOrcamento(entrada: unknown[], unidade: Unidade, modalidade: Modalidade): Orcamento {
+  if (entrada.length === 0) throw new ErroOrcamento("Nenhum tapete no pedido");
+  const itens = entrada.map((item, i) => {
+    const r = itemPedidoSchema.safeParse(item);
+    if (!r.success) throw new ErroOrcamento(`Tapete ${i + 1}: dados incompletos`);
+    return r.data;
+  });
   if (modalidade === "balcao" && !unidade.aceita_balcao) {
     throw new ErroOrcamento("Esta unidade não atende no balcão");
   }

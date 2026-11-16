@@ -194,6 +194,431 @@ button:disabled {
   margin-bottom: 6px !important;
 }
 
+.painel-topo nav {
+  display: flex;
+  gap: 24px;
+}
+
+.painel-usuario span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+}
+
+.painel-usuario small {
+  color: rgb(255 255 255 / 0.6);
+  font-size: 12px;
+}
+
+.titulo-linha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.versao,
+.descricao {
+  margin: 0 0 12px;
+  color: #6b7a89;
+  font-size: 14px;
+}
+
+.info {
+  background: #eef6f9;
+  border: 1px solid #cfe6ee;
+  color: var(--azul);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.bloco {
+  background: #fff;
+  border: 1px solid #e3e6e8;
+  border-radius: 14px;
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+
+.bloco h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: var(--navy);
+}
+
+.grade-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 20px;
+  margin-top: 12px;
+}
+
+select {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid #c9d1da;
+  border-radius: 10px;
+  background: #fff;
+}
+
+input:disabled,
+select:disabled {
+  background: #f3f5f6;
+  color: #4b5866;
+}
+
+label.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  margin-top: 14px;
+}
+
+fieldset.opcoes {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+fieldset.opcoes legend {
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 2px;
+}
+
+fieldset.opcoes label.check {
+  margin-top: 6px;
+}
+
+fieldset.opcoes-linha {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-top: 16px;
+}
+
+.campo-numero {
+  display: flex;
+  align-items: center;
+  border: 1px solid #c9d1da;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.campo-numero:focus-within {
+  outline: 2px solid var(--petroleo);
+  outline-offset: 1px;
+}
+
+.campo-numero input {
+  border: 0;
+  flex: 1;
+  min-width: 0;
+  outline: none;
+}
+
+.afixo {
+  padding: 0 10px;
+  color: #6b7a89;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.abas-unidades {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0 16px;
+}
+
+.aba {
+  margin: 0;
+  padding: 8px 16px;
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid #c9d1da;
+  font-size: 14px;
+}
+
+.aba:hover:not(:disabled) {
+  background: #eef6f9;
+}
+
+.aba.ativa,
+.aba.ativa:hover {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+
+.aba-nova {
+  border-style: dashed;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+.tabela th {
+  text-align: left;
+  font-size: 13px;
+  color: #6b7a89;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e3e6e8;
+}
+
+.tabela td {
+  padding: 8px;
+  vertical-align: top;
+  border-bottom: 1px solid #f0f2f3;
+}
+
+.tabela td input {
+  width: 100%;
+}
+
+.col-preco {
+  width: 200px;
+}
+
+.col-acao {
+  width: 44px;
+}
+
+.id {
+  display: block;
+  margin-top: 4px;
+  color: #98a5b1;
+  font-size: 12px;
+}
+
+button.remover {
+  margin: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #98a5b1;
+  font-size: 22px;
+  line-height: 1;
+}
+
+button.remover:hover:not(:disabled) {
+  background: #fdecea;
+  color: var(--erro);
+}
+
+button.botao-link {
+  margin: 10px 0 0;
+  padding: 6px 0;
+  background: transparent;
+  color: var(--azul);
+  border-radius: 0;
+}
+
+button.botao-link:hover:not(:disabled) {
+  background: transparent;
+  text-decoration: underline;
+}
+
+button.botao-secundario {
+  background: #fff;
+  color: var(--navy);
+  border: 1px solid #c9d1da;
+}
+
+button.botao-secundario:hover:not(:disabled) {
+  background: #f3f5f6;
+}
+
+button.botao-perigo {
+  margin-top: 18px;
+  background: transparent;
+  color: var(--erro);
+  border: 1px solid #f3c1bb;
+  padding: 9px 16px;
+  font-size: 14px;
+}
+
+button.botao-perigo:hover:not(:disabled) {
+  background: #fdecea;
+}
+
+.linha-cep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.linha-cep input {
+  width: 140px;
+}
+
+.linha-cep span {
+  color: #6b7a89;
+  font-size: 14px;
+}
+
+.aviso {
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+
+.aviso p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.aviso ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.aviso-ok {
+  background: #e8f7ee;
+  color: #146c3a;
+  border: 1px solid #bfe5cd;
+}
+
+.aviso-erro {
+  background: #fdecea;
+  color: var(--erro);
+  border: 1px solid #f3c1bb;
+}
+
+.precos {
+  padding-bottom: 90px;
+}
+
+.barra-salvar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 28px;
+  background: #fff;
+  border-top: 1px solid #e3e6e8;
+  box-shadow: 0 -8px 24px rgb(0 0 0 / 0.06);
+}
+
+.barra-salvar span {
+  margin-right: auto;
+  color: #6b7a89;
+  font-size: 14px;
+}
+
+.barra-salvar button {
+  margin: 0;
+  padding: 10px 20px;
+}
+
+.calcular-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+
+.tapete-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resumo {
+  position: sticky;
+  top: 20px;
+}
+
+.resumo-itens {
+  list-style: none;
+  margin: 12px 0;
+  padding: 0;
+}
+
+.resumo-itens li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f2f3;
+  font-size: 14px;
+}
+
+.resumo-itens li div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resumo-itens li span {
+  color: #6b7a89;
+  font-size: 13px;
+}
+
+.resumo-totais {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  margin: 12px 0 0;
+  font-size: 14px;
+}
+
+.resumo-totais dt {
+  color: #556677;
+}
+
+.resumo-totais dd {
+  margin: 0;
+  text-align: right;
+}
+
+.resumo-totais .total {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  padding-top: 10px;
+  border-top: 1px solid #e3e6e8;
+}
+
+@media (max-width: 900px) {
+  .calcular-grade {
+    grid-template-columns: 1fr;
+  }
+
+  .painel-topo {
+    gap: 16px;
+    padding: 0 16px;
+    overflow-x: auto;
+  }
+
+  .painel-topo nav {
+    gap: 14px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+}
+
 .voltar {
   color: rgb(255 255 255 / 0.75);
   font-size: 14px;
