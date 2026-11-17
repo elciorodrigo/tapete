@@ -1,7 +1,7 @@
 name: tapete
 
 services:
-  # api.tapete.solucoesdigitais.io
+  # API só na rede interna. O site encaminha /flow, /health, /webhooks e /admin/api.
   tapete-api:
     build:
       context: ..
@@ -19,19 +19,21 @@ services:
         condition: service_healthy
     networks:
       - interna
-      - proxy
 
-  # tapete.solucoesdigitais.io (site em / e painel em /admin)
+  # tapete.solucoesdigitais.io — única entrada pública (site, painel e API)
   tapete-web:
     build:
       context: ..
       dockerfile: apps/site/Dockerfile
       args:
-        API_PUBLIC_URL: ${API_PUBLIC_URL}
+        API_PUBLIC_URL: ${API_PUBLIC_URL:-}
         WHATSAPP_NUMERO: ${WHATSAPP_NUMERO:-}
     container_name: tapete-web
     restart: unless-stopped
+    depends_on:
+      - tapete-api
     networks:
+      - interna
       - proxy
 
   tapete-db:

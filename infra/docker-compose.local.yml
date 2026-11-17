@@ -9,8 +9,5 @@ services:
       COOKIE_SECURE: "false"
 
   tapete-web:
-    build:
-      args:
-        API_PUBLIC_URL: http://localhost:3000
     ports:
       - "127.0.0.1:8080:80"

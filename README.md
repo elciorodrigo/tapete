@@ -2,10 +2,7 @@
 
 Código do sistema Tapetê. A documentação do projeto fica fora desta pasta (`../docs`, `../flow`, `../marca`).
 
-| Endereço | Container | O que atende |
-|---|---|---|
-| `tapete.solucoesdigitais.io` | `tapete-web` (nginx) | Site em `/` e painel da equipe em `/admin` |
-| `api.tapete.solucoesdigitais.io` | `tapete-api` (porta 3000) | API: endpoint do WhatsApp Flow, webhooks da Meta, API do painel e, depois, do orçamento pelo site |
+Um domínio só, `tapete.solucoesdigitais.io`. O Nginx Proxy Manager aponta para o `tapete-web`. O nginx do site encaminha `/flow`, `/health`, `/webhooks/` e `/admin/api/` para o `tapete-api`, que não fica exposto.
 
 | Pasta | Conteúdo |
 |---|---|
@@ -39,41 +36,42 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
 
 ## VPS
 
+No clone, a raiz do repositório já é o sistema. Nesta pasta de trabalho, entre em `app/` antes.
+
 ```bash
-cd app/infra
-cp .env.example .env   # PROXY_NETWORK, senha do banco, WHATSAPP_NUMERO
+cd infra
+cp .env.example .env   # PROXY_NETWORK, senha do banco, WHATSAPP_NUMERO. API_PUBLIC_URL fica vazio
 docker compose up -d --build
 ```
 
-Nenhuma porta é publicada. No Nginx Proxy Manager:
+Nenhuma porta é publicada. No Nginx Proxy Manager, um host só:
 
 | Domínio | Forward Hostname | Porta |
 |---|---|---|
 | `tapete.solucoesdigitais.io` | `tapete-web` | 80 |
-| `api.tapete.solucoesdigitais.io` | `tapete-api` | 3000 |
 
-Os dois com certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos ficam em `infra/.env` e `infra/keys/`, fora do git.
+Certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos ficam em `infra/.env` e `infra/keys/`, fora do git.
 
 ### Endpoint do Flow
 
-Na Meta, o endpoint do Flow é `https://api.tapete.solucoesdigitais.io/flow`. O webhook (quando for configurar) é `https://api.tapete.solucoesdigitais.io/webhooks/meta`.
+Na Meta, o endpoint do Flow é `https://tapete.solucoesdigitais.io/flow`. O webhook (quando for configurar) é `https://tapete.solucoesdigitais.io/webhooks/meta`.
 
-A chave privada tem que ser a par da chave pública já assinada no número. Se ainda não tiver o par, na VPS:
+A chave privada tem que ser a par da chave pública já assinada no número. Se ainda não tiver o par, na VPS, a partir da raiz do clone:
 
 ```bash
-mkdir -p app/infra/keys
-openssl genrsa -out app/infra/keys/flow_private.pem 2048
-openssl rsa -in app/infra/keys/flow_private.pem -pubout -out app/infra/keys/flow_public.pem
+mkdir -p infra/keys
+openssl genrsa -out infra/keys/flow_private.pem 2048
+openssl rsa -in infra/keys/flow_private.pem -pubout -out infra/keys/flow_public.pem
 ```
 
-Cole `flow_public.pem` na criptografia do número. O container lê `flow_private.pem` em `/app/keys`. `https://api.tapete.solucoesdigitais.io/health` mostra `flow_chave: true` quando o arquivo está no lugar. Aí cole a URL do endpoint e clique em Enviar: a Meta manda um ping cifrado e o servidor responde `active`.
+Cole `flow_public.pem` na criptografia do número. O container lê `flow_private.pem` em `/app/keys`. `https://tapete.solucoesdigitais.io/health` mostra `flow_chave: true` quando o arquivo está no lugar. Aí cole a URL do endpoint e clique em Enviar: a Meta manda um ping cifrado e o servidor responde `active`.
 
 ### Usuários do painel
 
 Não há cadastro pela tela. O usuário é criado no servidor; sem senha informada, uma aleatória é gerada e mostrada uma vez. Rodar de novo com o mesmo e-mail redefine a senha e encerra as sessões abertas.
 
 ```bash
-cd app/infra
+cd infra
 docker compose exec tapete-api node apps/api/dist/cli/criar-admin.js email@dominio.com "Nome" admin      # ou atendente
 ```
 
