@@ -40,7 +40,7 @@ No clone, a raiz do repositório já é o sistema. Nesta pasta de trabalho, entr
 
 ```bash
 cd infra
-cp .env.example .env   # PROXY_NETWORK, senha do banco, WHATSAPP_NUMERO. API_PUBLIC_URL fica vazio
+cp .env.example .env   # troque só POSTGRES_PASSWORD
 docker compose up -d --build
 ```
 
