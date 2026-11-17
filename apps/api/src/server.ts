@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
@@ -6,6 +7,7 @@ import { rotasPrecos } from "./admin/precos.js";
 import { carregarCatalogo, catalogo } from "./catalogo.js";
 import { config } from "./config.js";
 import { pool } from "./db.js";
+import { rotasFlow } from "./flow/rota.js";
 import { migrar } from "./migracoes.js";
 
 const app = Fastify({ logger: true, trustProxy: true, bodyLimit: 1024 * 1024 });
@@ -22,6 +24,7 @@ await app.register(cors, {
 await app.register(cookie);
 await app.register(rotasAuth);
 await app.register(rotasPrecos);
+await app.register(rotasFlow);
 
 app.get("/", async () => ({ servico: "tapete-api" }));
 
@@ -29,7 +32,13 @@ app.get("/health", async (_req, reply) => {
   const unidades = catalogo().unidades.length;
   try {
     await pool.query("select 1");
-    return { status: "ok", db: "ok", unidades, mode: config.flowMode };
+    return {
+      status: "ok",
+      db: "ok",
+      unidades,
+      mode: config.flowMode,
+      flow_chave: existsSync(config.flowPrivateKeyPath),
+    };
   } catch (err) {
     app.log.error(err);
     return reply.code(503).send({ status: "erro", db: "indisponivel", unidades });

@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { parseCatalogo, podeMudarStatus, proximosStatus, unidadePorCep } from "../src/index.js";
+import {
+  STATUS,
+  STATUS_ROTULO,
+  ehStatus,
+  mensagemStatus,
+  parseCatalogo,
+  podeMudarStatus,
+  proximosStatus,
+  unidadePorCep,
+} from "../src/index.js";
 
 const catalogo = parseCatalogo({
   marca: "Tapetê",
@@ -43,11 +52,43 @@ describe("parseCatalogo", () => {
   });
 });
 
+describe("parseCatalogo (campos do Flow)", () => {
+  it("preenche períodos, formas de pagamento e versão dos termos em catálogos antigos", () => {
+    expect(catalogo.termos_versao).toBe("1");
+    expect(catalogo.periodos.map((p) => p.id)).toEqual(["qualquer", "manha", "tarde"]);
+    expect(catalogo.formas_pagamento.map((f) => f.id)).toEqual(["pix", "cartao"]);
+  });
+
+  it("recusa período repetido", () => {
+    expect(() =>
+      parseCatalogo({ ...catalogo, periodos: [{ id: "manha", nome: "Manhã" }, { id: "manha", nome: "Cedo" }] }),
+    ).toThrow(/Períodos/);
+  });
+});
+
 describe("status", () => {
   it("segue o fluxo do pedido", () => {
     expect(proximosStatus("NOVO")).toEqual(["CONFIRMADO", "CANCELADO"]);
     expect(podeMudarStatus("COLETADO", "EM_LAVAGEM")).toBe(true);
     expect(podeMudarStatus("COLETADO", "CANCELADO")).toBe(false);
     expect(podeMudarStatus("ENTREGUE", "NOVO")).toBe(false);
+  });
+
+  it("passa pela secagem entre a lavagem e o pronto", () => {
+    expect(proximosStatus("EM_LAVAGEM")).toEqual(["EM_SECAGEM"]);
+    expect(proximosStatus("EM_SECAGEM")).toEqual(["PRONTO"]);
+    expect(podeMudarStatus("EM_LAVAGEM", "PRONTO")).toBe(false);
+    expect(STATUS_ROTULO.EM_SECAGEM).toBe("Em secagem");
+  });
+
+  it("tem mensagem padrão com o número do pedido para cada status", () => {
+    expect(mensagemStatus("EM_LAVAGEM", "TP-000123")).toBe("Seu pedido TP-000123 está em lavagem.");
+    expect(mensagemStatus("EM_SECAGEM", "TP-000123")).toBe("Seu pedido TP-000123 está em secagem.");
+    for (const s of STATUS) expect(mensagemStatus(s, "TP-000001")).toContain("TP-000001");
+  });
+
+  it("reconhece status válidos", () => {
+    expect(ehStatus("EM_SECAGEM")).toBe(true);
+    expect(ehStatus("LAVANDO")).toBe(false);
   });
 });

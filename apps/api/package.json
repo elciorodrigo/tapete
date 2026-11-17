@@ -8,6 +8,8 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "admin:criar": "node dist/cli/criar-admin.js",
+    "flow:chaves": "tsx src/cli/flow-chaves.ts",
+    "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

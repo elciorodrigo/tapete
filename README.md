@@ -13,7 +13,7 @@ Código do sistema Tapetê. A documentação do projeto fica fora desta pasta (`
 | `apps/admin` | Painel da equipe (React + Vite), publicado em `/admin` do site |
 | `apps/api` | Backend Node + Fastify |
 | `packages/core` | Núcleo: catálogo, unidade pelo CEP, cálculo de preço, status do pedido |
-| `config/precos.json` | Unidades, faixas de CEP e preços (relido sem reiniciar) |
+| `config/precos.json` | Preços iniciais, importados para o banco só na primeira vez. Depois, os preços são editados no painel (Preços e configurações) |
 | `infra` | Docker Compose (web, API, PostgreSQL) e `.env.example` |
 
 ## Desenvolvimento
@@ -53,6 +53,20 @@ Nenhuma porta é publicada. No Nginx Proxy Manager:
 | `api.tapete.solucoesdigitais.io` | `tapete-api` | 3000 |
 
 Os dois com certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos ficam em `infra/.env` e `infra/keys/`, fora do git.
+
+### Endpoint do Flow
+
+Na Meta, o endpoint do Flow é `https://api.tapete.solucoesdigitais.io/flow`. O webhook (quando for configurar) é `https://api.tapete.solucoesdigitais.io/webhooks/meta`.
+
+A chave privada tem que ser a par da chave pública já assinada no número. Se ainda não tiver o par, na VPS:
+
+```bash
+mkdir -p app/infra/keys
+openssl genrsa -out app/infra/keys/flow_private.pem 2048
+openssl rsa -in app/infra/keys/flow_private.pem -pubout -out app/infra/keys/flow_public.pem
+```
+
+Cole `flow_public.pem` na criptografia do número. O container lê `flow_private.pem` em `/app/keys`. `https://api.tapete.solucoesdigitais.io/health` mostra `flow_chave: true` quando o arquivo está no lugar. Aí cole a URL do endpoint e clique em Enviar: a Meta manda um ping cifrado e o servidor responde `active`.
 
 ### Usuários do painel
 

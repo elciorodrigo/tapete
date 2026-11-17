@@ -39,6 +39,90 @@ const MIGRACOES: { id: string; sql: string }[] = [
       );
     `,
   },
+  {
+    id: "003_pedidos_whatsapp",
+    sql: `
+      create table contacts (
+        wa_id            text primary key,
+        profile_name     text,
+        last_inbound_at  timestamptz,
+        created_at       timestamptz not null default now(),
+        updated_at       timestamptz not null default now()
+      );
+
+      create table inbound_messages (
+        wamid       text primary key,
+        wa_id       text not null,
+        type        text not null,
+        created_at  timestamptz not null default now()
+      );
+
+      create table quotes (
+        id                    bigserial primary key,
+        number                text generated always as ('TP-' || lpad(id::text, 6, '0')) stored unique,
+        channel               text not null default 'WHATSAPP',
+        wa_id                 text not null,
+        customer_name         text not null,
+        unit_id               text not null,
+        modality              text not null check (modality in ('coleta', 'balcao')),
+        address               jsonb,
+        period                text,
+        payment_method        text,
+        items                 jsonb not null,
+        subtotal_cents        int not null,
+        delivery_fee_cents    int not null,
+        minimum_adjust_cents  int not null,
+        total_cents           int not null,
+        catalog_version_id    bigint references catalog_versions(id),
+        terms_version         text not null,
+        terms_url             text not null,
+        terms_accepted_at     timestamptz not null,
+        status                text not null default 'NOVO',
+        created_at            timestamptz not null default now(),
+        updated_at            timestamptz not null default now()
+      );
+      create index quotes_status on quotes(status);
+      create index quotes_wa_id on quotes(wa_id);
+
+      create table flow_sessions (
+        id          bigserial primary key,
+        flow_token  text not null unique,
+        wa_id       text not null,
+        state       jsonb not null default '{"itens": []}',
+        quote_id    bigint references quotes(id),
+        expires_at  timestamptz not null,
+        closed_at   timestamptz,
+        created_at  timestamptz not null default now(),
+        updated_at  timestamptz not null default now()
+      );
+
+      create table order_events (
+        id           bigserial primary key,
+        quote_id     bigint not null references quotes(id) on delete cascade,
+        from_status  text,
+        to_status    text not null,
+        user_id      bigint references admin_users(id) on delete set null,
+        notify       boolean not null default false,
+        message      text,
+        created_at   timestamptz not null default now()
+      );
+      create index order_events_quote_id on order_events(quote_id);
+
+      create table outbound_messages (
+        id          bigserial primary key,
+        quote_id    bigint references quotes(id) on delete set null,
+        wa_id       text not null,
+        kind        text not null check (kind in ('text', 'template', 'interactive')),
+        content     jsonb not null,
+        wamid       text unique,
+        status      text not null check (status in ('sent', 'delivered', 'read', 'failed')),
+        error       text,
+        created_at  timestamptz not null default now(),
+        updated_at  timestamptz not null default now()
+      );
+      create index outbound_messages_quote_id on outbound_messages(quote_id);
+    `,
+  },
 ];
 
 export async function migrar(pool: Pool): Promise<string[]> {

@@ -1,6 +1,16 @@
 {
   "marca": "Tapetê",
   "termos_url": "https://tapete.solucoesdigitais.io/termos",
+  "termos_versao": "1",
+  "periodos": [
+    { "id": "qualquer", "nome": "Tanto faz" },
+    { "id": "manha", "nome": "Manhã" },
+    { "id": "tarde", "nome": "Tarde" }
+  ],
+  "formas_pagamento": [
+    { "id": "pix", "nome": "Pix" },
+    { "id": "cartao", "nome": "Cartão de crédito" }
+  ],
   "unidades": [
     {
       "id": "moema",
