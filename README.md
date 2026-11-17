@@ -48,7 +48,7 @@ Nenhuma porta é publicada. No Nginx Proxy Manager, um host só:
 
 | Domínio | Forward Hostname | Porta |
 |---|---|---|
-| `tapete.solucoesdigitais.io` | `tapete-web` | 80 |
+| `tapete.solucoesdigitais.io` | `tapete-web` | 8000 |
 
 Certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos ficam em `infra/.env` e `infra/keys/`, fora do git.
 

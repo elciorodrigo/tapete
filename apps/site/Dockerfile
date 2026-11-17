@@ -20,4 +20,5 @@ FROM nginx:1.29-alpine
 COPY apps/site/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/site/dist /usr/share/nginx/html
 COPY --from=build /app/apps/admin/dist /usr/share/nginx/html/admin
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -qO- http://127.0.0.1:8000/ >/dev/null || exit 1
