@@ -30,11 +30,13 @@ services:
         WHATSAPP_NUMERO: ${WHATSAPP_NUMERO:-}
     container_name: tapete-web
     restart: unless-stopped
+    expose:
+      - "8000"
     depends_on:
       - tapete-api
     networks:
       - interna
-      - proxy
+      - nginx-proxy_default
 
   tapete-db:
     image: postgres:16-alpine
@@ -56,6 +58,5 @@ services:
 
 networks:
   interna:
-  proxy:
+  nginx-proxy_default:
     external: true
-    name: ${PROXY_NETWORK}

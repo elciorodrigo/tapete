@@ -40,7 +40,7 @@ No clone, a raiz do repositório já é o sistema. Nesta pasta de trabalho, entr
 
 ```bash
 cd infra
-cp .env.example .env   # troque só POSTGRES_PASSWORD
+cp .env.example .env   # troque só POSTGRES_PASSWORD. A rede já é nginx-proxy_default
 docker compose up -d --build
 ```
 

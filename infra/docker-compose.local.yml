@@ -11,3 +11,8 @@ services:
   tapete-web:
     ports:
       - "127.0.0.1:8080:8000"
+
+networks:
+  nginx-proxy_default:
+    external: false
+    name: tapete_local_proxy
