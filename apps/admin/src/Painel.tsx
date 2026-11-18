@@ -52,7 +52,7 @@ export function Painel({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
       </header>
 
       <main className="painel-conteudo">
-        {pagina === "pedidos" && <Pedidos />}
+        {pagina === "pedidos" && <Pedidos podeEditar={usuario.role === "admin"} />}
         {pagina === "precos" && <Precos podeEditar={usuario.role === "admin"} />}
         {pagina === "calcular" && <Calcular />}
       </main>

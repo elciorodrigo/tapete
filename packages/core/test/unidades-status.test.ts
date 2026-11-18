@@ -68,16 +68,16 @@ describe("parseCatalogo (campos do Flow)", () => {
 
 describe("status", () => {
   it("segue o fluxo do pedido", () => {
-    expect(proximosStatus("NOVO")).toEqual(["CONFIRMADO", "CANCELADO"]);
-    expect(podeMudarStatus("COLETADO", "EM_LAVAGEM")).toBe(true);
-    expect(podeMudarStatus("COLETADO", "CANCELADO")).toBe(false);
+    expect(proximosStatus("NOVO")).toEqual(["COLETA_AGENDADA", "CANCELADO"]);
+    expect(podeMudarStatus("COLETA_AGENDADA", "EM_LAVAGEM")).toBe(true);
+    expect(podeMudarStatus("EM_ROTA", "ENTREGUE")).toBe(true);
     expect(podeMudarStatus("ENTREGUE", "NOVO")).toBe(false);
   });
 
-  it("passa pela secagem entre a lavagem e o pronto", () => {
+  it("passa pela secagem e segue para a rota de entrega", () => {
     expect(proximosStatus("EM_LAVAGEM")).toEqual(["EM_SECAGEM"]);
-    expect(proximosStatus("EM_SECAGEM")).toEqual(["PRONTO"]);
-    expect(podeMudarStatus("EM_LAVAGEM", "PRONTO")).toBe(false);
+    expect(proximosStatus("EM_SECAGEM")).toEqual(["EM_ROTA"]);
+    expect(podeMudarStatus("EM_LAVAGEM", "EM_ROTA")).toBe(false);
     expect(STATUS_ROTULO.EM_SECAGEM).toBe("Em secagem");
   });
 

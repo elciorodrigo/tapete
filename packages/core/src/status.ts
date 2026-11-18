@@ -6,6 +6,7 @@ export const STATUS = [
   "EM_LAVAGEM",
   "EM_SECAGEM",
   "PRONTO",
+  "EM_ROTA",
   "ENTREGUE",
   "CANCELADO",
 ] as const;
@@ -20,18 +21,20 @@ export const STATUS_ROTULO: Record<StatusPedido, string> = {
   EM_LAVAGEM: "Em lavagem",
   EM_SECAGEM: "Em secagem",
   PRONTO: "Pronto",
+  EM_ROTA: "Em rota de entrega",
   ENTREGUE: "Entregue",
   CANCELADO: "Cancelado",
 };
 
 const TRANSICOES: Record<StatusPedido, StatusPedido[]> = {
-  NOVO: ["CONFIRMADO", "CANCELADO"],
+  NOVO: ["COLETA_AGENDADA", "CANCELADO"],
   CONFIRMADO: ["COLETA_AGENDADA", "CANCELADO"],
-  COLETA_AGENDADA: ["COLETADO", "CANCELADO"],
+  COLETA_AGENDADA: ["EM_LAVAGEM", "CANCELADO"],
   COLETADO: ["EM_LAVAGEM"],
   EM_LAVAGEM: ["EM_SECAGEM"],
-  EM_SECAGEM: ["PRONTO"],
-  PRONTO: ["ENTREGUE"],
+  EM_SECAGEM: ["EM_ROTA"],
+  PRONTO: ["EM_ROTA"],
+  EM_ROTA: ["ENTREGUE"],
   ENTREGUE: [],
   CANCELADO: [],
 };
@@ -56,6 +59,7 @@ const MENSAGEM_STATUS: Record<StatusPedido, (numero: string) => string> = {
   EM_LAVAGEM: (n) => `Seu pedido ${n} está em lavagem.`,
   EM_SECAGEM: (n) => `Seu pedido ${n} está em secagem.`,
   PRONTO: (n) => `Seu pedido ${n} está pronto! Vamos combinar a entrega.`,
+  EM_ROTA: (n) => `Seu pedido ${n} está em rota de entrega.`,
   ENTREGUE: (n) => `Pedido ${n} entregue. Obrigado por escolher a Tapetê!`,
   CANCELADO: (n) => `Seu pedido ${n} foi cancelado.`,
 };

@@ -14,13 +14,20 @@ function estadoDe(valor: unknown): EstadoFluxo {
   return valor as EstadoFluxo;
 }
 
-export async function obterOuCriarSessao(pool: Pool, flowToken: string): Promise<Sessao> {
+export async function obterOuCriarSessao(pool: Pool, flowToken: string, waId = "preview"): Promise<Sessao> {
   await pool.query(
     `insert into flow_sessions (flow_token, wa_id, state, expires_at)
-     values ($1, 'preview', '{"itens":[]}'::jsonb, now() + interval '7 days')
+     values ($1, $2, '{"itens":[]}'::jsonb, now() + interval '7 days')
      on conflict (flow_token) do nothing`,
-    [flowToken],
+    [flowToken, waId],
   );
+  if (waId !== "preview") {
+    await pool.query(
+      `update flow_sessions set wa_id = $2, updated_at = now()
+        where flow_token = $1 and wa_id = 'preview'`,
+      [flowToken, waId],
+    );
+  }
   const { rows } = await pool.query<{ wa_id: string; state: unknown; quote_id: string | null; valida: boolean }>(
     `select wa_id, state, quote_id, expires_at > now() as valida
        from flow_sessions where flow_token = $1`,

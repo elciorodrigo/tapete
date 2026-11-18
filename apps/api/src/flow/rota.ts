@@ -4,11 +4,13 @@ import type { FastifyInstance } from "fastify";
 import { catalogo, catalogoComVersao } from "../catalogo.js";
 import { config } from "../config.js";
 import { pool } from "../db.js";
-import { criarWhatsApp, normalizarTelefone, type RegistroEnvio } from "../whatsapp/cliente.js";
-import { ErroCriptografia, carregarChavePrivada, chaveDePem, cifrarResposta, decifrarPedido } from "./cripto.js";
+import { confirmarPedido } from "../whatsapp/avisos.js";
+import { normalizarTelefone } from "../whatsapp/cliente.js";
+import { whatsappDaApi } from "../whatsapp/registro.js";
+import { carregarChavePrivada, chaveDePem, cifrarResposta, decifrarPedido } from "./cripto.js";
 import { gravarPedido } from "./pedidos.js";
 import { SessaoInvalida, fecharSessao, obterOuCriarSessao, salvarEstado } from "./sessoes.js";
-import { consultarViaCep, estadoInicial, textoResumo, tratarFluxo, type EstadoFluxo } from "./telas.js";
+import { consultarViaCep, estadoInicial, tratarFluxo, type EstadoFluxo } from "./telas.js";
 
 let chaveCache: KeyObject | null = null;
 
@@ -28,13 +30,19 @@ function assinaturaOk(raw: Buffer, header: string | undefined): boolean {
   return recebido.length === esperado.length && timingSafeEqual(recebido, esperado);
 }
 
-async function registrarEnvio(r: RegistroEnvio): Promise<number> {
-  const { rows } = await pool.query<{ id: string }>(
-    `insert into outbound_messages (quote_id, wa_id, kind, content, wamid, status, error)
-     values ($1, $2, $3, $4, $5, $6, $7) returning id`,
-    [r.quote_id, r.wa_id, r.kind, r.content, r.wamid, r.status, r.error],
-  );
-  return Number(rows[0]!.id);
+function telefoneNoPedido(body: Record<string, unknown>, flowToken: string): string | null {
+  const candidatos: unknown[] = [flowToken, body.from, body.wa_id];
+  const data = body.data;
+  if (data && typeof data === "object" && !Array.isArray(data)) {
+    const campos = data as Record<string, unknown>;
+    candidatos.push(campos.wa_id, campos.phone, campos.from);
+  }
+  for (const candidato of candidatos) {
+    if (typeof candidato !== "string") continue;
+    const telefone = normalizarTelefone(candidato);
+    if (telefone) return telefone;
+  }
+  return null;
 }
 
 export async function rotasFlow(app: FastifyInstance): Promise<void> {
@@ -44,17 +52,7 @@ export async function rotasFlow(app: FastifyInstance): Promise<void> {
     app.log.warn("Sem a chave privada do Flow. A Meta não consegue verificar o endpoint até o arquivo existir.");
   }
 
-  const whatsapp = criarWhatsApp(
-    {
-      accessToken: config.meta.accessToken,
-      phoneNumberId: config.meta.phoneNumberId,
-      graphVersion: config.meta.graphVersion,
-      flowId: config.meta.flowId,
-      flowMode: config.flowMode,
-    },
-    registrarEnvio,
-    app.log,
-  );
+  const whatsapp = whatsappDaApi(app.log);
 
   app.removeContentTypeParser("application/json");
   app.addContentTypeParser("application/json", { parseAs: "buffer" }, (_req, body, done) => {
@@ -102,7 +100,7 @@ export async function rotasFlow(app: FastifyInstance): Promise<void> {
 
     let sessao;
     try {
-      sessao = await obterOuCriarSessao(pool, flowToken);
+      sessao = await obterOuCriarSessao(pool, flowToken, telefoneNoPedido(body, flowToken) ?? "preview");
     } catch (err) {
       if (err instanceof SessaoInvalida) return reply.code(427).send();
       throw err;
@@ -118,11 +116,13 @@ export async function rotasFlow(app: FastifyInstance): Promise<void> {
     const estado: EstadoFluxo = { ...efeito.estado, pedidoNumero: gravado.number, pagamento: efeito.pedido.pagamento };
     await fecharSessao(pool, flowToken, gravado.id, estado);
 
-    const telefone = normalizarTelefone(sessao.waId);
-    if (telefone) {
-      const texto = textoResumo(gravado.number, gravado.total, efeito.pedido.modalidade);
-      void whatsapp.enviarTexto(telefone, texto, gravado.id).catch((err) => app.log.error({ err }, "resumo não enviado"));
-    }
+    void confirmarPedido(pool, whatsapp, {
+      id: gravado.id,
+      number: gravado.number,
+      waId: sessao.waId,
+      modality: efeito.pedido.modalidade,
+      totalCents: gravado.totalCents,
+    }).catch((err) => app.log.error({ err }, "confirmação não enviada"));
 
     return responder(efeito.resposta(gravado.number));
   });

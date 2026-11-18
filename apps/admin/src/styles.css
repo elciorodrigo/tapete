@@ -75,7 +75,18 @@ input {
   border-radius: 10px;
 }
 
-input:focus {
+textarea {
+  font: inherit;
+  font-weight: 400;
+  padding: 11px 12px;
+  border: 1px solid #c9d1da;
+  border-radius: 10px;
+  resize: vertical;
+  min-height: 64px;
+}
+
+input:focus,
+textarea:focus {
   outline: 2px solid var(--petroleo);
   outline-offset: 1px;
   border-color: transparent;
@@ -194,11 +205,54 @@ button:disabled {
   margin-bottom: 6px !important;
 }
 
+a.ver-pedido {
+  font-weight: 700;
+  color: var(--azul);
+  text-decoration: none;
+}
+
+a.ver-pedido:hover {
+  text-decoration: underline;
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 16px;
+  margin: 12px 0 0;
+}
+
+.ficha dt {
+  color: #6b7a89;
+  font-size: 13px;
+}
+
+.ficha dd {
+  margin: 0;
+}
+
 .pedido-detalhe {
   display: block;
   margin-top: 2px;
   color: #6b7a89;
   font-size: 12px;
+}
+
+.acoes-pedido {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.acoes-pedido button,
+.acoes-pedido button.botao-perigo {
+  margin-top: 0;
+  padding: 7px 12px;
+  font-size: 13px;
+}
+
+.bloco label + label {
+  margin-top: 14px;
 }
 
 .pedido-status {

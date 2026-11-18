@@ -462,7 +462,3 @@ export async function consultarViaCep(cep: string): Promise<ResultadoCep> {
   }
 }
 
-export function textoResumo(numero: string, total: string, modalidade: Modalidade): string {
-  const como = modalidade === "coleta" ? "coleta em casa" : "retirada na loja";
-  return `Pedido ${numero} recebido. Total estimado ${total} (${como}). Nossa equipe confirma o valor e combina o pagamento por aqui.`;
-}

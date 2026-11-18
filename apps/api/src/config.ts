@@ -21,13 +21,13 @@ export const config = {
   cookieSecure: process.env.COOKIE_SECURE !== "false",
   devToken: opcional("DEV_TOKEN"),
   meta: {
-    accessToken: opcional("META_ACCESS_TOKEN"),
-    phoneNumberId: opcional("META_PHONE_NUMBER_ID"),
+    accessToken: opcional("GRAPH_API_TOKEN") || opcional("META_ACCESS_TOKEN"),
+    phoneNumberId: opcional("BUSINESS_PHONE_NUMBER_ID") || opcional("business_phone_number_id") || opcional("META_PHONE_NUMBER_ID"),
     wabaId: opcional("META_WABA_ID"),
     appSecret: opcional("META_APP_SECRET"),
     webhookVerifyToken: opcional("META_WEBHOOK_VERIFY_TOKEN"),
     flowId: opcional("META_FLOW_ID"),
-    graphVersion: opcional("META_GRAPH_VERSION") || "v23.0",
+    graphVersion: opcional("META_GRAPH_VERSION") || "v22.0",
     templateStatus: opcional("META_TEMPLATE_STATUS"),
   },
 };

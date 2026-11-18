@@ -123,6 +123,33 @@ const MIGRACOES: { id: string; sql: string }[] = [
       create index outbound_messages_quote_id on outbound_messages(quote_id);
     `,
   },
+  {
+    id: "004_mensagens_etapa",
+    sql: `
+      alter table quotes add column confirmation_sent_at timestamptz;
+
+      create table message_templates (
+        key         text primary key,
+        body        text not null,
+        updated_at  timestamptz not null default now()
+      );
+
+      insert into message_templates (key, body) values
+        ('confirmacao', 'Pedido {numero} recebido. Total estimado {total}. Nossa equipe confirma o valor e combina o pagamento por aqui.'),
+        ('coleta', 'Boas notícias, seu tapete já está selecionado para coleta.'),
+        ('lavagem', 'Oi, passei para te informar que o seu tapete entrou em lavagem.'),
+        ('secagem', 'Oi, passei para te informar que o seu tapete entrou em secagem.'),
+        ('rota', 'Oi, passei para te informar que o seu tapete está em rota de entrega.');
+    `,
+  },
+  {
+    id: "005_mensagem_confirmacao",
+    sql: `
+      insert into message_templates (key, body) values
+        ('confirmacao', 'Pedido {numero} recebido. Total estimado {total}. Nossa equipe confirma o valor e combina o pagamento por aqui.')
+      on conflict (key) do nothing;
+    `,
+  },
 ];
 
 export async function migrar(pool: Pool): Promise<string[]> {

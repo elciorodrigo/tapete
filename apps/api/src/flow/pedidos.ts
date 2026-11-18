@@ -8,7 +8,7 @@ export async function gravarPedido(
   catalogo: Catalogo,
   versaoId: number,
   waId: string,
-): Promise<{ id: number; number: string; total: string }> {
+): Promise<{ id: number; number: string; total: string; totalCents: number }> {
   const unidade = catalogo.unidades.find((u) => u.id === pedido.unidadeId) as Unidade;
   const orc = calcularOrcamento(
     pedido.itens.map((item) =>
@@ -64,7 +64,7 @@ export async function gravarPedido(
       [gravado.id],
     );
     await client.query("commit");
-    return { id: Number(gravado.id), number: gravado.number, total: formatarBRL(orc.total) };
+    return { id: Number(gravado.id), number: gravado.number, total: formatarBRL(orc.total), totalCents: orc.total };
   } catch (err) {
     await client.query("rollback");
     throw err;

@@ -54,7 +54,7 @@ Certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos ficam em `infra
 
 ### Endpoint do Flow
 
-Na Meta, o endpoint do Flow é `https://tapete.solucoesdigitais.io/flow`. O webhook (quando for configurar) é `https://tapete.solucoesdigitais.io/webhooks/meta`.
+Na Meta, o endpoint do Flow é `https://tapete.solucoesdigitais.io/flow`. O webhook, para saber o número de quem concluiu o orçamento e mandar a confirmação, é `https://tapete.solucoesdigitais.io/webhooks/meta`. No `infra/.env`: `GRAPH_API_TOKEN`, `business_phone_number_id` e `META_WEBHOOK_VERIFY_TOKEN` (o mesmo token informado na Meta).
 
 Se o número já tem chave pública, use a mesma privada no `infra/.env`, nas variáveis `PRIVATE_KEY` (PEM entre aspas, com `\n`) e `PASSPHRASE`. Não gere outra e não troque a chave no WhatsApp. Se ainda não tiver o par, na VPS, a partir da raiz do clone:
 

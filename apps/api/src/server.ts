@@ -9,6 +9,7 @@ import { carregarCatalogo, catalogo } from "./catalogo.js";
 import { config } from "./config.js";
 import { pool } from "./db.js";
 import { rotasFlow } from "./flow/rota.js";
+import { rotasWebhook } from "./whatsapp/webhook.js";
 import { migrar } from "./migracoes.js";
 
 const app = Fastify({ logger: true, trustProxy: true, bodyLimit: 1024 * 1024 });
@@ -26,6 +27,7 @@ await app.register(cookie);
 await app.register(rotasAuth);
 await app.register(rotasPrecos);
 await app.register(rotasPedidos);
+await app.register(rotasWebhook);
 await app.register(rotasFlow);
 
 app.get("/", async () => ({ servico: "tapete-api" }));
