@@ -42,9 +42,15 @@ export type EstadoFluxo = {
   endereco?: EnderecoFluxo;
   pagamento?: string;
   pedidoNumero?: string;
+  via?: EnderecoViaCep;
 };
 
 export type EnderecoViaCep = { logradouro: string; bairro: string; localidade: string; uf: string };
+
+export type ResultadoCep =
+  | { situacao: "ok"; endereco: EnderecoViaCep }
+  | { situacao: "inexistente" }
+  | { situacao: "indisponivel" };
 
 export type PedidoFluxo = {
   nome: string;
@@ -237,7 +243,7 @@ export async function tratarFluxo(
   estado: EstadoFluxo,
   catalogo: Catalogo,
   flowToken: string,
-  consultarCep: (cep: string) => Promise<EnderecoViaCep | null>,
+  consultarCep: (cep: string) => Promise<ResultadoCep>,
 ): Promise<EfeitoFluxo> {
   if (body.action === "ping") return { tipo: "protocolo", resposta: { data: { status: "active" } } };
 
@@ -269,10 +275,18 @@ export async function tratarFluxo(
   const unidade = unidadeDe(estado, catalogo);
 
   if (step === "CEP") {
+    const local = { saudacao: saudacao(estado.nome) };
     const cep = normalizarCep(texto(data.cep));
-    if (!cep) return tela("LOCAL", { saudacao: saudacao(estado.nome) }, estado, "CEP inválido. Use 00000-000.");
+    if (!cep) return tela("LOCAL", local, estado, "CEP inválido. Use 00000-000.");
+    const consulta = await consultarCep(cep);
+    if (consulta.situacao === "inexistente") {
+      return tela("LOCAL", local, estado, "Não encontramos esse CEP. Confira os números.");
+    }
+    if (consulta.situacao !== "ok") {
+      return tela("LOCAL", local, estado, "Não consegui conferir o CEP agora. Tente de novo.");
+    }
     const encontrada = unidadePorCep(catalogo, cep);
-    const proximo = { ...estado, cep };
+    const proximo = { ...estado, cep, via: consulta.endereco };
     if (!encontrada) {
       return tela(
         "FORA_AREA",
@@ -343,17 +357,19 @@ export async function tratarFluxo(
     const proximo: EstadoFluxo = { ...estado, nome, modalidade, periodo };
     if (modalidade === "balcao") return tela("PROPOSTA", dadosProposta(proximo, unidade, catalogo), proximo);
 
-    const via = estado.cep ? await consultarCep(estado.cep) : null;
+    const via = await enderecoDoCep(proximo, consultarCep);
+    if (!via) {
+      return tela("ENTREGA", dadosEntrega(proximo, unidade, catalogo), proximo, "Não consegui confirmar o CEP. Volte e informe o CEP de novo.");
+    }
+    const comVia = { ...proximo, via };
     return tela(
       "ENDERECO",
       {
-        cep_texto: via?.localidade
-          ? `CEP ${formatarCep(estado.cep!)} · ${via.localidade}/${via.uf}`
-          : `CEP ${formatarCep(estado.cep ?? "")}`,
-        logradouro: via?.logradouro ?? "",
-        bairro: via?.bairro ?? "",
+        cep_texto: `CEP ${formatarCep(comVia.cep ?? "")} · ${via.localidade}/${via.uf}`,
+        logradouro: via.logradouro,
+        bairro: via.bairro,
       },
-      proximo,
+      comVia,
     );
   }
 
@@ -364,8 +380,8 @@ export async function tratarFluxo(
       complemento: texto(data.complemento),
       bairro: texto(data.bairro),
       referencia: texto(data.referencia),
-      cidade: "",
-      uf: "",
+      cidade: estado.via?.localidade ?? "",
+      uf: estado.via?.uf ?? "",
     };
     const base = {
       cep_texto: `CEP ${formatarCep(estado.cep ?? "")}`,
@@ -416,20 +432,33 @@ export async function tratarFluxo(
   return tela(body.screen || "LOCAL", { saudacao: saudacao(estado.nome) }, estado, "Não entendi este passo. Tente de novo.");
 }
 
-export async function consultarViaCep(cep: string): Promise<EnderecoViaCep | null> {
+async function enderecoDoCep(
+  estado: EstadoFluxo,
+  consultarCep: (cep: string) => Promise<ResultadoCep>,
+): Promise<EnderecoViaCep | null> {
+  if (estado.via) return estado.via;
+  if (!estado.cep) return null;
+  const consulta = await consultarCep(estado.cep);
+  return consulta.situacao === "ok" ? consulta.endereco : null;
+}
+
+export async function consultarViaCep(cep: string): Promise<ResultadoCep> {
   try {
-    const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { signal: AbortSignal.timeout(2000) });
-    if (!res.ok) return null;
+    const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return { situacao: "indisponivel" };
     const json = (await res.json()) as { erro?: boolean; logradouro?: string; bairro?: string; localidade?: string; uf?: string };
-    if (json.erro) return null;
+    if (json.erro || !json.localidade || !json.uf) return { situacao: "inexistente" };
     return {
-      logradouro: json.logradouro ?? "",
-      bairro: json.bairro ?? "",
-      localidade: json.localidade ?? "",
-      uf: json.uf ?? "",
+      situacao: "ok",
+      endereco: {
+        logradouro: json.logradouro ?? "",
+        bairro: json.bairro ?? "",
+        localidade: json.localidade,
+        uf: json.uf,
+      },
     };
   } catch {
-    return null;
+    return { situacao: "indisponivel" };
   }
 }
 

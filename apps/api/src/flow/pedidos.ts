@@ -47,7 +47,7 @@ export async function gravarPedido(
           : { cep: formatarCep(pedido.cep), loja: unidade.endereco_loja },
         pedido.periodo,
         pedido.pagamento,
-        orc.itens,
+        JSON.stringify(orc.itens),
         orc.subtotal,
         orc.taxa_coleta,
         orc.ajuste_minimo,

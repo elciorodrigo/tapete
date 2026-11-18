@@ -4,10 +4,16 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseCatalogo } from "@tapete/core";
 import { chaveDePem, cifrarResposta, decifrarPedido, pemDoAmbiente } from "../src/flow/cripto.ts";
-import { estadoInicial, tratarFluxo, type EnderecoViaCep } from "../src/flow/telas.ts";
+import { estadoInicial, tratarFluxo, type ResultadoCep } from "../src/flow/telas.ts";
 
 const catalogo = parseCatalogo(JSON.parse(readFileSync(new URL("../../../config/precos.json", import.meta.url), "utf8")));
-const semCep = async (): Promise<EnderecoViaCep | null> => null;
+const enderecoSp: ResultadoCep = {
+  situacao: "ok",
+  endereco: { logradouro: "Rua Joaquim Floriano", bairro: "Itaim Bibi", localidade: "São Paulo", uf: "SP" },
+};
+const cepOk = async (): Promise<ResultadoCep> => enderecoSp;
+const cepInexistente = async (): Promise<ResultadoCep> => ({ situacao: "inexistente" });
+const cepIndisponivel = async (): Promise<ResultadoCep> => ({ situacao: "indisponivel" });
 
 function cifrarComoMeta(json: unknown, publicKey: ReturnType<typeof generateKeyPairSync>["publicKey"]) {
   const aesKey = randomBytes(16);
@@ -61,11 +67,11 @@ describe("criptografia do Flow", () => {
 
 describe("telas do Flow", () => {
   it("responde active no ping e abre o LOCAL no INIT", async () => {
-    const ping = await tratarFluxo({ action: "ping" }, estadoInicial(), catalogo, "t", semCep);
+    const ping = await tratarFluxo({ action: "ping" }, estadoInicial(), catalogo, "t", cepOk);
     assert.equal(ping.tipo, "protocolo");
     assert.deepEqual(ping.resposta, { data: { status: "active" } });
 
-    const init = await tratarFluxo({ action: "INIT" }, estadoInicial(), catalogo, "t", semCep);
+    const init = await tratarFluxo({ action: "INIT" }, estadoInicial(), catalogo, "t", cepOk);
     assert.equal(init.tipo, "tela");
     if (init.tipo !== "tela") return;
     assert.equal((init.resposta as { screen: string }).screen, "LOCAL");
@@ -77,11 +83,38 @@ describe("telas do Flow", () => {
       estadoInicial(),
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     assert.equal(efeito.tipo, "tela");
     if (efeito.tipo !== "tela") return;
     assert.equal((efeito.resposta as { screen: string }).screen, "FORA_AREA");
+  });
+
+  it("fica no CEP quando ele não existe ou não pôde ser conferido", async () => {
+    const inexistente = await tratarFluxo(
+      { action: "data_exchange", data: { step: "CEP", cep: "04001-000" } },
+      estadoInicial(),
+      catalogo,
+      "t",
+      cepInexistente,
+    );
+    assert.equal(inexistente.tipo, "tela");
+    if (inexistente.tipo !== "tela") return;
+    const aviso = inexistente.resposta as { screen: string; data: { error_message?: string } };
+    assert.equal(aviso.screen, "LOCAL");
+    assert.match(aviso.data.error_message ?? "", /Não encontramos/);
+    assert.equal(inexistente.estado.cep, undefined);
+
+    const fora = await tratarFluxo(
+      { action: "data_exchange", data: { step: "CEP", cep: "04001-000" } },
+      estadoInicial(),
+      catalogo,
+      "t",
+      cepIndisponivel,
+    );
+    if (fora.tipo !== "tela") return;
+    assert.equal((fora.resposta as { screen: string }).screen, "LOCAL");
+    assert.match((fora.resposta as { data: { error_message?: string } }).data.error_message ?? "", /Tente de novo/);
   });
 
   it("recusa medida faltando, aceita o tapete e deixa adicionar outro", async () => {
@@ -90,7 +123,7 @@ describe("telas do Flow", () => {
       estadoInicial(),
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     assert.equal(comCep.tipo, "tela");
     if (comCep.tipo !== "tela") return;
@@ -101,7 +134,7 @@ describe("telas do Flow", () => {
       comCep.estado,
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     assert.equal(semMedida.tipo, "tela");
     if (semMedida.tipo !== "tela") return;
@@ -117,7 +150,7 @@ describe("telas do Flow", () => {
       comCep.estado,
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     assert.equal(ok.tipo, "tela");
     if (ok.tipo !== "tela") return;
@@ -129,7 +162,7 @@ describe("telas do Flow", () => {
       ok.estado,
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     assert.equal(outro.tipo, "tela");
     if (outro.tipo !== "tela") return;
@@ -144,7 +177,7 @@ describe("telas do Flow", () => {
       estado,
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     if (cep.tipo !== "tela") return;
     estado = cep.estado;
@@ -156,7 +189,7 @@ describe("telas do Flow", () => {
       estado,
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     if (item.tipo !== "tela") return;
     const entrega = await tratarFluxo(
@@ -164,7 +197,7 @@ describe("telas do Flow", () => {
       item.estado,
       catalogo,
       "t",
-      semCep,
+      cepOk,
     );
     if (entrega.tipo !== "tela") return;
     assert.equal((entrega.resposta as { data: { show_cupom: boolean } }).data.show_cupom, false);
@@ -174,7 +207,7 @@ describe("telas do Flow", () => {
       entrega.estado,
       catalogo,
       "tok",
-      semCep,
+      cepOk,
     );
     assert.equal(balcao.tipo, "tela");
     if (balcao.tipo !== "tela") return;
@@ -185,7 +218,7 @@ describe("telas do Flow", () => {
       entrega.estado,
       catalogo,
       "tok",
-      async () => ({ logradouro: "Rua Joaquim Floriano", bairro: "Itaim Bibi", localidade: "São Paulo", uf: "SP" }),
+      cepOk,
     );
     assert.equal(coleta.tipo, "tela");
     if (coleta.tipo !== "tela") return;
@@ -208,7 +241,7 @@ describe("telas do Flow", () => {
       base,
       catalogo,
       "tok",
-      semCep,
+      cepOk,
     );
     assert.equal(sem.tipo, "tela");
     if (sem.tipo !== "tela") return;
@@ -219,7 +252,7 @@ describe("telas do Flow", () => {
       base,
       catalogo,
       "tok",
-      semCep,
+      cepOk,
     );
     assert.equal(com.tipo, "gravar");
     if (com.tipo !== "gravar") return;
