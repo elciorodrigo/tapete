@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual, type KeyObject } from "node:crypto";
 import { existsSync } from "node:fs";
 import type { FastifyInstance } from "fastify";
+import { ErroOrcamento } from "@tapete/core";
 import { catalogo, catalogoComVersao } from "../catalogo.js";
 import { vincularPedido } from "../clientes.js";
 import { config } from "../config.js";
@@ -10,8 +11,8 @@ import { normalizarTelefone } from "../whatsapp/cliente.js";
 import { whatsappDaApi } from "../whatsapp/registro.js";
 import { carregarChavePrivada, chaveDePem, cifrarResposta, decifrarPedido } from "./cripto.js";
 import { gravarPedido } from "./pedidos.js";
-import { SessaoInvalida, fecharSessao, obterOuCriarSessao, salvarEstado } from "./sessoes.js";
-import { consultarViaCep, estadoInicial, tratarFluxo, type EstadoFluxo } from "./telas.js";
+import { SessaoInvalida, obterOuCriarSessao, salvarEstado } from "./sessoes.js";
+import { consultarViaCep, estadoInicial, tratarFluxo } from "./telas.js";
 
 let chaveCache: KeyObject | null = null;
 
@@ -107,25 +108,56 @@ export async function rotasFlow(app: FastifyInstance): Promise<void> {
       throw err;
     }
 
-    const efeito = await tratarFluxo(body, sessao.estado, catalogo(), flowToken, consultarViaCep);
+    let efeito;
+    try {
+      efeito = await tratarFluxo(body, sessao.estado, catalogo(), flowToken, consultarViaCep);
+    } catch (err) {
+      app.log.error({ err, screen: body.screen }, "flow não tratado");
+      return responder({
+        version: "3.0",
+        screen: body.screen || "LOCAL",
+        data: { error_message: "Não consegui continuar este orçamento. Tente de novo." },
+      });
+    }
     if (efeito.tipo === "protocolo" || efeito.tipo === "tela") {
       if (efeito.tipo === "tela") await salvarEstado(pool, flowToken, efeito.estado);
       return responder(efeito.resposta);
     }
 
-    const gravado = await gravarPedido(pool, efeito.pedido, catalogo(), catalogoComVersao().versao.id, sessao.waId);
-    const estado: EstadoFluxo = { ...efeito.estado, pedidoNumero: gravado.number, pagamento: efeito.pedido.pagamento };
-    await fecharSessao(pool, flowToken, gravado.id, estado);
-    if (normalizarTelefone(sessao.waId)) await vincularPedido(pool, gravado.id, sessao.waId, null);
+    try {
+      const gravado = await gravarPedido(pool, efeito.pedido, catalogo(), catalogoComVersao().versao.id, sessao.waId, {
+        flowToken,
+        estado: efeito.estado,
+      });
+      if (normalizarTelefone(sessao.waId)) {
+        await vincularPedido(pool, gravado.id, sessao.waId, null).catch((err) => app.log.error({ err }, "cliente não vinculado"));
+      }
+      app.log.info({ pedido: gravado.number, id: gravado.id }, "pedido gravado");
 
-    void confirmarPedido(pool, whatsapp, {
-      id: gravado.id,
-      number: gravado.number,
-      waId: sessao.waId,
-      modality: efeito.pedido.modalidade,
-      totalCents: gravado.totalCents,
-    }).catch((err) => app.log.error({ err }, "confirmação não enviada"));
+      void confirmarPedido(pool, whatsapp, {
+        id: gravado.id,
+        number: gravado.number,
+        waId: sessao.waId,
+        modality: efeito.pedido.modalidade,
+        totalCents: gravado.totalCents,
+      }).catch((err) => app.log.error({ err }, "confirmação não enviada"));
 
-    return responder(efeito.resposta(gravado.number));
+      return responder(efeito.resposta(gravado.number));
+    } catch (err) {
+      app.log.error({ err }, "pedido do flow não gravado");
+      const detalhe = err instanceof ErroOrcamento ? err.message : "Tente confirmar de novo.";
+      return responder({
+        version: "3.0",
+        screen: "PROPOSTA",
+        data: {
+          error_message: `O pedido não foi salvo. ${detalhe}`,
+          unidade_texto: "Tapetê",
+          resumo: "O pedido não entrou no painel.",
+          destaques: "",
+          formas_pagamento: catalogo().formas_pagamento.map((f) => ({ id: f.id, title: f.nome, description: "" })),
+          termos_url: catalogo().termos_url,
+        },
+      });
+    }
   });
 }

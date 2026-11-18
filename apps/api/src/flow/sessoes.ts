@@ -10,8 +10,16 @@ export type Sessao = {
 };
 
 function estadoDe(valor: unknown): EstadoFluxo {
-  if (!valor || typeof valor !== "object" || !Array.isArray((valor as EstadoFluxo).itens)) return estadoInicial();
-  return valor as EstadoFluxo;
+  let atual = valor;
+  for (let i = 0; i < 2 && typeof atual === "string"; i++) {
+    try {
+      atual = JSON.parse(atual) as unknown;
+    } catch {
+      return estadoInicial();
+    }
+  }
+  if (!atual || typeof atual !== "object" || !Array.isArray((atual as EstadoFluxo).itens)) return estadoInicial();
+  return atual as EstadoFluxo;
 }
 
 export async function obterOuCriarSessao(pool: Pool, flowToken: string, waId = "preview"): Promise<Sessao> {
@@ -39,14 +47,17 @@ export async function obterOuCriarSessao(pool: Pool, flowToken: string, waId = "
 }
 
 export async function salvarEstado(pool: Pool, flowToken: string, estado: EstadoFluxo): Promise<void> {
-  await pool.query("update flow_sessions set state = $2, updated_at = now() where flow_token = $1", [flowToken, estado]);
+  await pool.query("update flow_sessions set state = $2::jsonb, updated_at = now() where flow_token = $1", [
+    flowToken,
+    JSON.stringify(estado),
+  ]);
 }
 
 export async function fecharSessao(pool: Pool, flowToken: string, quoteId: number, estado: EstadoFluxo): Promise<void> {
   await pool.query(
     `update flow_sessions
-        set state = $3, quote_id = $2, closed_at = now(), updated_at = now()
+        set state = $3::jsonb, quote_id = $2, closed_at = now(), updated_at = now()
       where flow_token = $1`,
-    [flowToken, quoteId, estado],
+    [flowToken, quoteId, JSON.stringify(estado)],
   );
 }

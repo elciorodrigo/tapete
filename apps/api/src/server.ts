@@ -3,6 +3,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { rotasAuth } from "./admin/auth.js";
+import { rotasCadastros } from "./admin/cadastros.js";
 import { rotasPedidos } from "./admin/pedidos.js";
 import { rotasPrecos } from "./admin/precos.js";
 import { carregarCatalogo, catalogo } from "./catalogo.js";
@@ -21,12 +22,13 @@ await carregarCatalogo(config.precosPath, app.log);
 await app.register(cors, {
   origin: config.webOrigins,
   credentials: true,
-  methods: ["GET", "POST", "PATCH", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
 });
 await app.register(cookie);
 await app.register(rotasAuth);
 await app.register(rotasPrecos);
 await app.register(rotasPedidos);
+await app.register(rotasCadastros);
 await app.register(rotasWebhook);
 await app.register(rotasFlow);
 

@@ -1,8 +1,9 @@
 import type { FastifyInstance } from "fastify";
 import { catalogo } from "../catalogo.js";
 import { pool } from "../db.js";
+import { listarGrupos, salvarCampos } from "../configuracoes.js";
 import { listarEtapas, salvarEtapas } from "../etapas.js";
-import { avisarEtapa, lerConfirmacao, salvarConfirmacao } from "../whatsapp/avisos.js";
+import { avisarEtapa } from "../whatsapp/avisos.js";
 import { whatsappDaApi } from "../whatsapp/registro.js";
 import { exigirSessao } from "./auth.js";
 
@@ -88,20 +89,29 @@ export async function rotasPedidos(app: FastifyInstance): Promise<void> {
   app.addHook("onRequest", exigirSessao);
 
   app.get("/admin/api/configuracoes", async () => ({
-    confirmacao: await lerConfirmacao(pool),
+    grupos: await listarGrupos(pool),
     etapas: await listarEtapas(pool),
   }));
 
-  app.put<{ Body: { confirmacao?: unknown; etapas?: unknown } }>("/admin/api/configuracoes", async (req, reply) => {
-    if (req.usuario!.role !== "admin") return reply.code(403).send({ erro: "só administradores alteram as configurações" });
-    try {
-      const confirmacao = await salvarConfirmacao(pool, String(req.body?.confirmacao ?? ""));
-      const etapas = await salvarEtapas(pool, req.body?.etapas);
-      return { confirmacao, etapas };
-    } catch (err) {
-      return reply.code(400).send({ erro: err instanceof Error ? err.message : "Configuração inválida" });
-    }
-  });
+  app.put<{ Params: { grupo: string }; Body: { valores?: unknown; etapas?: unknown } }>(
+    "/admin/api/configuracoes/:grupo",
+    async (req, reply) => {
+      if (req.usuario!.role !== "admin") return reply.code(403).send({ erro: "só administradores alteram as configurações" });
+      const { rows } = await pool.query<{ editor: string }>("select editor from configuracao_grupos where id = $1", [req.params.grupo]);
+      const grupo = rows[0];
+      if (!grupo) return reply.code(404).send({ erro: "Seção não encontrada" });
+      try {
+        if (grupo.editor === "etapas") {
+          const etapas = await salvarEtapas(pool, req.body?.etapas);
+          return { etapas };
+        }
+        await salvarCampos(pool, req.params.grupo, req.body?.valores);
+        return { grupos: await listarGrupos(pool) };
+      } catch (err) {
+        return reply.code(400).send({ erro: err instanceof Error ? err.message : "Configuração inválida" });
+      }
+    },
+  );
 
   app.patch<{ Params: { id: string }; Body: { etapa_id?: number; cancelar?: boolean } }>("/admin/api/pedidos/:id", async (req, reply) => {
     const id = Number(req.params.id);

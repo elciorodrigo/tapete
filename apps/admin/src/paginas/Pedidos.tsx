@@ -85,15 +85,29 @@ export function Pedidos() {
   }, []);
 
   useEffect(() => {
-    api("/admin/api/pedidos")
-      .then(async (res) => {
+    if (pedidoId) return;
+    let ativo = true;
+    async function carregar() {
+      try {
+        const res = await api("/admin/api/pedidos");
         if (!res.ok) throw new Error("Não foi possível carregar os pedidos.");
         const json = (await res.json()) as { pedidos: Pedido[] };
+        if (!ativo) return;
         setPedidos(json.pedidos);
-      })
-      .catch((e: Error) => setErro(e.message));
-
-  }, []);
+        setErro("");
+      } catch (e) {
+        if (ativo) setErro(e instanceof Error ? e.message : "Não foi possível carregar os pedidos.");
+      }
+    }
+    void carregar();
+    const timer = window.setInterval(() => void carregar(), 10000);
+    window.addEventListener("focus", carregar);
+    return () => {
+      ativo = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", carregar);
+    };
+  }, [pedidoId]);
 
   if (pedidoId) {
     return (

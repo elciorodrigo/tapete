@@ -195,6 +195,79 @@ const MIGRACOES: { id: string; sql: string }[] = [
           or (q.status in ('PRONTO', 'EM_ROTA', 'ENTREGUE') and e.posicao = 4);
     `,
   },
+  {
+    id: "008_configuracoes",
+    sql: `
+      create table configuracao_grupos (
+        id          text primary key,
+        nome        text not null,
+        descricao   text not null default '',
+        editor      text not null default 'campos',
+        posicao     int not null
+      );
+
+      create table configuracoes (
+        chave       text primary key,
+        grupo       text not null references configuracao_grupos(id),
+        rotulo      text not null,
+        tipo        text not null check (tipo in ('texto', 'texto_longo', 'numero', 'booleano')),
+        valor       jsonb not null,
+        ajuda       text not null default '',
+        posicao     int not null,
+        updated_at  timestamptz not null default now()
+      );
+
+      insert into configuracao_grupos (id, nome, descricao, editor, posicao) values
+        ('whatsapp', 'WhatsApp', 'Textos e opções enviados ao cliente.', 'campos', 1),
+        ('etapas', 'Etapas do pedido', 'Crie, apague e ordene as etapas. Cada uma pode ter a própria mensagem.', 'etapas', 2);
+
+      insert into configuracoes (chave, grupo, rotulo, tipo, valor, ajuda, posicao)
+      select
+        'confirmacao',
+        'whatsapp',
+        'Confirmação do orçamento',
+        'texto_longo',
+        to_jsonb(coalesce(
+          (select body from message_templates where key = 'confirmacao'),
+          'Pedido {numero} recebido. Total estimado {total}. Nossa equipe confirma o valor e combina o pagamento por aqui.'
+        )),
+        'Enviada quando o cliente termina o orçamento no WhatsApp. Use {numero} e {total}.',
+        1;
+    `,
+  },
+  {
+    id: "009_cadastro_clientes",
+    sql: `
+      alter table clientes alter column wa_id drop not null;
+
+      create table origens (
+        id          bigserial primary key,
+        nome        text not null unique,
+        ativo       boolean not null default true,
+        created_at  timestamptz not null default now()
+      );
+
+      do $$
+      declare
+        r record;
+        novo bigint;
+      begin
+        for r in
+          select id, wa_id, customer_name from quotes where cliente_id is null order by id
+        loop
+          if r.wa_id is not null and r.wa_id <> 'preview' then
+            insert into clientes (wa_id, nome) values (r.wa_id, r.customer_name)
+            on conflict (wa_id) do update
+              set nome = coalesce(clientes.nome, excluded.nome), updated_at = now()
+            returning id into novo;
+          else
+            insert into clientes (nome) values (r.customer_name) returning id into novo;
+          end if;
+          update quotes set cliente_id = novo where id = r.id;
+        end loop;
+      end $$;
+    `,
+  },
 ];
 
 export async function migrar(pool: Pool): Promise<string[]> {

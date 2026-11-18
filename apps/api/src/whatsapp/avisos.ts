@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { formatarBRL } from "@tapete/core";
+import { lerConfiguracao } from "../configuracoes.js";
 import { normalizarTelefone, type WhatsApp } from "./cliente.js";
 
 export function aplicarMensagem(body: string, campos: { numero: string; total?: string }): string {
@@ -7,19 +8,7 @@ export function aplicarMensagem(body: string, campos: { numero: string; total?: 
 }
 
 export async function lerConfirmacao(pool: Pool): Promise<string> {
-  const { rows } = await pool.query<{ body: string }>("select body from message_templates where key = 'confirmacao'");
-  return rows[0]?.body ?? "";
-}
-
-export async function salvarConfirmacao(pool: Pool, texto: string): Promise<string> {
-  const body = texto.trim();
-  if (!body || body.length > 1000) throw new Error("A confirmação do orçamento precisa ter texto.");
-  await pool.query(
-    `insert into message_templates (key, body) values ('confirmacao', $1)
-     on conflict (key) do update set body = excluded.body, updated_at = now()`,
-    [body],
-  );
-  return body;
+  return (await lerConfiguracao(pool, "confirmacao")).trim();
 }
 
 type PedidoAviso = {

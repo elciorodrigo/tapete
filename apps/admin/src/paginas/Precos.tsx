@@ -61,7 +61,7 @@ export function Precos({ podeEditar }: { podeEditar: boolean }) {
   if (!rascunho) {
     return (
       <>
-        <h1>Preços e configurações</h1>
+        <h1>Tipos de serviço</h1>
         {aviso && <p className="erro">{aviso.texto}</p>}
       </>
     );
@@ -128,7 +128,7 @@ export function Precos({ podeEditar }: { podeEditar: boolean }) {
   return (
     <div className="precos">
       <div className="titulo-linha">
-        <h1>Preços e configurações</h1>
+        <h1>Tipos de serviço</h1>
         {versao && (
           <p className="versao">
             Última alteração: {dataHora(versao.atualizado_em)}
