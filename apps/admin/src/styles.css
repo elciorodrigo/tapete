@@ -120,105 +120,148 @@ button:disabled {
 }
 
 .painel {
-  min-height: 100vh;
-  background: #f8f7f3;
-}
-
-.painel-topo {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-  height: 64px;
-  padding: 0 28px;
-  background: var(--navy);
-  color: #fff;
-}
-
-.painel-topo img {
-  height: 34px;
-  width: auto;
-}
-
-.painel-corpo {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
-  min-height: calc(100vh - 64px);
-  align-items: start;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+  background: #eef1f3;
 }
 
 .menu {
   position: sticky;
   top: 0;
-  max-height: calc(100vh - 64px);
-  overflow: auto;
-  padding: 12px 10px 28px;
-  background: #fff;
-  border-right: 1px solid #e3e6e8;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 18px 12px 14px;
+  background: var(--navy);
+  color: #fff;
 }
 
-.menu-grupo {
-  margin: 16px 10px 4px;
-  color: #6b7a89;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.menu-marca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 8px 16px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.menu-marca img {
+  height: 32px;
+  width: auto;
+}
+
+.menu-alternar {
+  display: none;
+}
+
+.menu nav {
+  flex: 1;
+  overflow: auto;
+  padding-top: 14px;
 }
 
 .menu a {
   display: block;
   margin: 1px 0;
-  padding: 8px 10px;
+  padding: 9px 12px;
   border-radius: 8px;
-  color: var(--navy);
+  color: rgb(255 255 255 / 0.78);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
 }
 
-.menu a.ativo {
-  background: #e7f4f8;
-  color: var(--azul);
-}
-
 .menu a:hover {
-  background: #f4f7f8;
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
 }
 
+.menu a.ativo,
 .menu a.ativo:hover {
-  background: #e7f4f8;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--agua);
 }
 
-.painel-usuario {
-  margin-left: auto;
+.menu-secao {
+  margin-top: 8px;
+}
+
+.menu-secao > button {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 14px;
-}
-
-.botao-sair {
-  padding: 7px 16px;
+  justify-content: space-between;
+  width: 100%;
   margin: 0;
+  padding: 9px 12px;
+  border-radius: 8px;
   background: transparent;
-  border: 1.5px solid rgb(255 255 255 / 0.4);
+  color: rgb(255 255 255 / 0.55);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.menu-secao > button:hover:not(:disabled) {
+  background: transparent;
+  color: #fff;
+}
+
+.menu-sub {
+  margin: 2px 0 6px;
+  padding-left: 8px;
+}
+
+.menu-apoio {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.menu-usuario {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 12px;
+  padding: 14px 8px 0;
+  border-top: 1px solid rgb(255 255 255 / 0.1);
   font-size: 14px;
 }
 
-.botao-sair:hover:not(:disabled) {
+.menu-usuario small {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 12px;
+}
+
+.menu-usuario .botao-sair {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  font-size: 14px;
+}
+
+.menu-usuario .botao-sair:hover:not(:disabled) {
   background: transparent;
   border-color: var(--agua);
 }
 
 .painel-conteudo {
-  max-width: 1180px;
-  padding: 28px 32px 48px;
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 32px 36px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .linha-busca {
   display: flex;
   gap: 8px;
-  margin: 0 0 16px;
+  margin: 0;
 }
 
 .linha-busca input {
@@ -244,30 +287,16 @@ button:disabled {
   padding: 28px 12px;
 }
 
-@media (max-width: 860px) {
-  .painel-corpo {
-    grid-template-columns: 1fr;
-  }
-
-  .menu {
-    position: static;
-    max-height: none;
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    border-right: 0;
-    border-bottom: 1px solid #e3e6e8;
-  }
-
-  .menu > div {
-    min-width: 180px;
-  }
+.painel-conteudo h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: 28px;
+  letter-spacing: -0.03em;
 }
 
-.painel-conteudo h1 {
-  margin: 0 0 20px;
-  color: var(--navy);
-  font-size: 26px;
+.painel-conteudo > .pedido-detalhe {
+  margin: -8px 0 0;
+  max-width: 62ch;
 }
 
 .vazio {
@@ -537,28 +566,28 @@ button:disabled {
 }
 
 .config-layout {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 16px;
-  align-items: start;
 }
 
 .config-menu {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid #e3e6e8;
-  border-radius: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
 }
 
 .config-menu button {
+  width: auto;
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: transparent;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #fff;
   color: var(--navy);
+  border: 1px solid #d5dde3;
   text-align: left;
 }
 
@@ -576,9 +605,49 @@ button:disabled {
   font-weight: 500;
 }
 
-@media (max-width: 860px) {
-  .config-layout {
+@media (max-width: 900px) {
+  .painel {
     grid-template-columns: 1fr;
+  }
+
+  .menu {
+    position: sticky;
+    z-index: 4;
+    height: auto;
+  }
+
+  .menu-alternar {
+    display: inline-flex;
+    width: auto;
+    margin: 0;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid rgb(255 255 255 / 0.28);
+    font-size: 13px;
+  }
+
+  .menu-alternar:hover:not(:disabled) {
+    background: transparent;
+    border-color: var(--agua);
+  }
+
+  .menu nav,
+  .menu-usuario {
+    display: none;
+  }
+
+  .menu.aberto nav,
+  .menu.aberto .menu-usuario {
+    display: flex;
+  }
+
+  .menu.aberto nav {
+    display: block;
+    max-height: 62vh;
+  }
+
+  .painel-conteudo {
+    padding: 24px 16px 48px;
   }
 }
 
@@ -742,10 +811,11 @@ a.ver-pedido:hover {
 
 .bloco {
   background: #fff;
-  border: 1px solid #e3e6e8;
-  border-radius: 14px;
-  padding: 22px 24px;
-  margin-bottom: 18px;
+  border: 1px solid #e4e8eb;
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin: 0;
+  box-shadow: 0 1px 0 rgb(1 35 59 / 0.03);
 }
 
 .bloco h2 {
@@ -842,7 +912,7 @@ fieldset.opcoes-linha {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin: 8px 0 16px;
+  margin: 0;
 }
 
 .aba {

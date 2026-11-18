@@ -10,24 +10,20 @@ import { Precos } from "./paginas/Precos";
 import { Rede } from "./paginas/Rede";
 import { Usuarios } from "./paginas/Usuarios";
 
-const MENU = [
+const DIRETOS = [{ id: "pedidos", nome: "Pedidos" }] as const;
+
+const GRUPOS = [
   {
-    grupo: "Atendimento",
+    id: "atendimento",
+    nome: "Atendimento",
     itens: [
       { id: "atendimento", nome: "Conversas" },
       { id: "atendimento/orcamento", nome: "Orçamento manual" },
     ],
   },
   {
-    grupo: "Agenda",
-    itens: [{ id: "calendario", nome: "Calendário" }],
-  },
-  {
-    grupo: "Pedidos",
-    itens: [{ id: "pedidos", nome: "Pedidos" }],
-  },
-  {
-    grupo: "Operação",
+    id: "operacao",
+    nome: "Operação",
     itens: [
       { id: "operacao/receber", nome: "Receber itens" },
       { id: "operacao/confirmar", nome: "Confirmar pedidos" },
@@ -39,7 +35,8 @@ const MENU = [
     ],
   },
   {
-    grupo: "Cadastros",
+    id: "cadastros",
+    nome: "Cadastros",
     itens: [
       { id: "clientes", nome: "Clientes" },
       { id: "cadastros/origens", nome: "Como conheceu" },
@@ -49,36 +46,44 @@ const MENU = [
       { id: "cadastros/rede", nome: "Rede" },
     ],
   },
-  {
-    grupo: "Análise",
-    itens: [{ id: "relatorios", nome: "Relatórios" }],
-  },
-  {
-    grupo: "Sistema",
-    itens: [{ id: "configuracoes", nome: "Configurações" }],
-  },
 ] as const;
 
-type Pagina = (typeof MENU)[number]["itens"][number]["id"];
+const APOIO = [
+  { id: "calendario", nome: "Calendário" },
+  { id: "relatorios", nome: "Relatórios" },
+  { id: "configuracoes", nome: "Configurações" },
+] as const;
+
+type Pagina = (typeof DIRETOS)[number]["id"] | (typeof GRUPOS)[number]["itens"][number]["id"] | (typeof APOIO)[number]["id"];
 
 function paginaDaUrl(): Pagina {
   const h = window.location.hash.slice(1);
   if (h === "pedidos" || h.startsWith("pedidos/")) return "pedidos";
   if (h === "clientes" || h.startsWith("clientes/")) return "clientes";
-  for (const grupo of MENU) {
-    for (const item of grupo.itens) {
-      if (item.id === h) return item.id;
-    }
+  const ids = new Set<string>([...DIRETOS, ...APOIO].map((item) => item.id));
+  for (const grupo of GRUPOS) {
+    for (const item of grupo.itens) ids.add(item.id);
   }
-  return "pedidos";
+  return ids.has(h) ? (h as Pagina) : "pedidos";
+}
+
+function grupoDaPagina(pagina: Pagina): string | null {
+  return GRUPOS.find((grupo) => grupo.itens.some((item) => item.id === pagina))?.id ?? null;
 }
 
 export function Painel({ usuario, onSair }: { usuario: Usuario; onSair: () => void }) {
   const [pagina, setPagina] = useState<Pagina>(paginaDaUrl);
+  const [aberto, setAberto] = useState<string | null>(grupoDaPagina(paginaDaUrl()));
+  const [menuAberto, setMenuAberto] = useState(false);
   const podeEditar = usuario.role === "admin";
 
   useEffect(() => {
-    const ouvir = () => setPagina(paginaDaUrl());
+    const ouvir = () => {
+      const proxima = paginaDaUrl();
+      setPagina(proxima);
+      setAberto(grupoDaPagina(proxima));
+      setMenuAberto(false);
+    };
     window.addEventListener("hashchange", ouvir);
     return () => window.removeEventListener("hashchange", ouvir);
   }, []);
@@ -88,34 +93,48 @@ export function Painel({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
     onSair();
   }
 
+  function link(item: { id: string; nome: string }) {
+    return (
+      <a key={item.id} href={`#${item.id}`} className={pagina === item.id ? "ativo" : undefined}>
+        {item.nome}
+      </a>
+    );
+  }
+
   return (
     <div className="painel">
-      <header className="painel-topo">
-        <img src={`${import.meta.env.BASE_URL}logo-claro.png`} alt="Tapetê" height={34} />
-        <div className="painel-usuario">
-          <span>
-            {usuario.name}
-            <small>{usuario.role === "admin" ? "Administrador" : "Atendente"}</small>
-          </span>
-          <button className="botao-sair" onClick={sair}>Sair</button>
+      <aside className={menuAberto ? "menu aberto" : "menu"}>
+        <div className="menu-marca">
+          <img src={`${import.meta.env.BASE_URL}logo-claro.png`} alt="Tapetê" />
+          <button type="button" className="menu-alternar" onClick={() => setMenuAberto((v) => !v)}>
+            {menuAberto ? "Fechar" : "Menu"}
+          </button>
         </div>
-      </header>
-
-      <div className="painel-corpo">
-        <aside className="menu">
-          {MENU.map((grupo) => (
-            <div key={grupo.grupo}>
-              <p className="menu-grupo">{grupo.grupo}</p>
-              {grupo.itens.map((item) => (
-                <a key={item.id} href={`#${item.id}`} className={pagina === item.id ? "ativo" : undefined}>
-                  {item.nome}
-                </a>
-              ))}
+        <nav>
+          {DIRETOS.map(link)}
+          {GRUPOS.map((grupo) => (
+            <div key={grupo.id} className="menu-secao">
+              <button
+                type="button"
+                aria-expanded={aberto === grupo.id}
+                onClick={() => setAberto((atual) => (atual === grupo.id ? null : grupo.id))}
+              >
+                {grupo.nome}
+                <span aria-hidden="true">{aberto === grupo.id ? "–" : "+"}</span>
+              </button>
+              {aberto === grupo.id && <div className="menu-sub">{grupo.itens.map(link)}</div>}
             </div>
           ))}
-        </aside>
+          <div className="menu-apoio">{APOIO.map(link)}</div>
+        </nav>
+        <div className="menu-usuario">
+          <strong>{usuario.name}</strong>
+          <small>{usuario.role === "admin" ? "Administrador" : "Atendente"}</small>
+          <button className="botao-sair" onClick={sair}>Sair</button>
+        </div>
+      </aside>
 
-        <main className="painel-conteudo">
+      <main className="painel-conteudo">
           {pagina === "atendimento" && (
             <Area
               titulo="Conversas"
@@ -164,7 +183,6 @@ export function Painel({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
           {pagina === "relatorios" && <Relatorios />}
           {pagina === "configuracoes" && <Configuracoes podeEditar={podeEditar} />}
         </main>
-      </div>
     </div>
   );
 }
