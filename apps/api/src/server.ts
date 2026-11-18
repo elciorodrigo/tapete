@@ -3,6 +3,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 import { rotasAuth } from "./admin/auth.js";
+import { rotasPedidos } from "./admin/pedidos.js";
 import { rotasPrecos } from "./admin/precos.js";
 import { carregarCatalogo, catalogo } from "./catalogo.js";
 import { config } from "./config.js";
@@ -24,6 +25,7 @@ await app.register(cors, {
 await app.register(cookie);
 await app.register(rotasAuth);
 await app.register(rotasPrecos);
+await app.register(rotasPedidos);
 await app.register(rotasFlow);
 
 app.get("/", async () => ({ servico: "tapete-api" }));

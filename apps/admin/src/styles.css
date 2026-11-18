@@ -194,6 +194,23 @@ button:disabled {
   margin-bottom: 6px !important;
 }
 
+.pedido-detalhe {
+  display: block;
+  margin-top: 2px;
+  color: #6b7a89;
+  font-size: 12px;
+}
+
+.pedido-status {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+  background: #eef6f9;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
 .painel-topo nav {
   display: flex;
   gap: 24px;
