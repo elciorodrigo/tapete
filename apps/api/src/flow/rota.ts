@@ -5,7 +5,7 @@ import { catalogo, catalogoComVersao } from "../catalogo.js";
 import { config } from "../config.js";
 import { pool } from "../db.js";
 import { criarWhatsApp, normalizarTelefone, type RegistroEnvio } from "../whatsapp/cliente.js";
-import { ErroCriptografia, carregarChavePrivada, cifrarResposta, decifrarPedido } from "./cripto.js";
+import { ErroCriptografia, carregarChavePrivada, chaveDePem, cifrarResposta, decifrarPedido } from "./cripto.js";
 import { gravarPedido } from "./pedidos.js";
 import { SessaoInvalida, fecharSessao, obterOuCriarSessao, salvarEstado } from "./sessoes.js";
 import { consultarViaCep, estadoInicial, textoResumo, tratarFluxo, type EstadoFluxo } from "./telas.js";
@@ -14,7 +14,9 @@ let chaveCache: KeyObject | null = null;
 
 function chavePrivada(): KeyObject {
   if (chaveCache) return chaveCache;
-  chaveCache = carregarChavePrivada(config.flowPrivateKeyPath, config.flowPrivateKeyPassphrase);
+  chaveCache = config.flowPrivateKeyPem
+    ? chaveDePem(config.flowPrivateKeyPem, config.flowPrivateKeyPassphrase)
+    : carregarChavePrivada(config.flowPrivateKeyPath, config.flowPrivateKeyPassphrase);
   return chaveCache;
 }
 
@@ -36,8 +38,8 @@ async function registrarEnvio(r: RegistroEnvio): Promise<number> {
 }
 
 export async function rotasFlow(app: FastifyInstance): Promise<void> {
-  const chavePresente = existsSync(config.flowPrivateKeyPath);
-  app.log.info({ caminho: config.flowPrivateKeyPath, presente: chavePresente }, "chave do Flow");
+  const chavePresente = Boolean(config.flowPrivateKeyPem) || existsSync(config.flowPrivateKeyPath);
+  app.log.info({ origem: config.flowPrivateKeyPem ? "env" : "arquivo", presente: chavePresente }, "chave do Flow");
   if (!chavePresente) {
     app.log.warn("Sem a chave privada do Flow. A Meta não consegue verificar o endpoint até o arquivo existir.");
   }

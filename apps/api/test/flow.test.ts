@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseCatalogo } from "@tapete/core";
-import { cifrarResposta, decifrarPedido } from "../src/flow/cripto.ts";
+import { chaveDePem, cifrarResposta, decifrarPedido, pemDoAmbiente } from "../src/flow/cripto.ts";
 import { estadoInicial, tratarFluxo, type EnderecoViaCep } from "../src/flow/telas.ts";
 
 const catalogo = parseCatalogo(JSON.parse(readFileSync(new URL("../../../config/precos.json", import.meta.url), "utf8")));
@@ -27,6 +27,20 @@ function cifrarComoMeta(json: unknown, publicKey: ReturnType<typeof generateKeyP
     },
   };
 }
+
+describe("chave no ambiente", () => {
+  it("monta o PEM quando o .env guarda quebras como \\n", () => {
+    const { privateKey } = generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      privateKeyEncoding: { type: "pkcs1", format: "pem" },
+      publicKeyEncoding: { type: "spki", format: "pem" },
+    });
+    const pem = privateKey as string;
+    const chave = chaveDePem(pem.trim().replace(/\n/g, "\\n"), "");
+    assert.equal(chave.type, "private");
+    assert.ok(pemDoAmbiente(pem).includes("BEGIN"));
+  });
+});
 
 describe("criptografia do Flow", () => {
   it("decifra o ping e devolve a resposta com o IV invertido", () => {

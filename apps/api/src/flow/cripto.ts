@@ -10,6 +10,19 @@ import {
 
 export class ErroCriptografia extends Error {}
 
+/** Aceita o PEM com quebras de linha reais ou com a sequência `\n`, como no .env. */
+export function pemDoAmbiente(valor: string): string {
+  const texto = valor.trim().replace(/^["']|["']$/g, "");
+  return texto.includes("\\n") ? texto.replace(/\\n/g, "\n") : texto;
+}
+
+export function chaveDePem(pem: string, passphrase: string): KeyObject {
+  return createPrivateKey({
+    key: pemDoAmbiente(pem),
+    passphrase: passphrase || undefined,
+  });
+}
+
 export function carregarChavePrivada(caminho: string, passphrase: string): KeyObject {
   return createPrivateKey({
     key: readFileSync(caminho),

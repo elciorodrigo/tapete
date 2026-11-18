@@ -37,7 +37,7 @@ app.get("/health", async (_req, reply) => {
       db: "ok",
       unidades,
       mode: config.flowMode,
-      flow_chave: existsSync(config.flowPrivateKeyPath),
+      flow_chave: Boolean(config.flowPrivateKeyPem) || existsSync(config.flowPrivateKeyPath),
     };
   } catch (err) {
     app.log.error(err);

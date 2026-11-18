@@ -56,7 +56,7 @@ Certificado Let's Encrypt, Force SSL e HTTP/2. Chaves e segredos ficam em `infra
 
 Na Meta, o endpoint do Flow é `https://tapete.solucoesdigitais.io/flow`. O webhook (quando for configurar) é `https://tapete.solucoesdigitais.io/webhooks/meta`.
 
-A chave privada tem que ser a par da chave pública já assinada no número. Se ainda não tiver o par, na VPS, a partir da raiz do clone:
+Se o número já tem chave pública, use a mesma privada no `infra/.env`, nas variáveis `PRIVATE_KEY` (PEM entre aspas, com `\n`) e `PASSPHRASE`. Não gere outra e não troque a chave no WhatsApp. Se ainda não tiver o par, na VPS, a partir da raiz do clone:
 
 ```bash
 mkdir -p infra/keys

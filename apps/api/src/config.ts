@@ -10,8 +10,9 @@ export const config = {
   port: Number(process.env.PORT ?? 3000),
   databaseUrl: required("DATABASE_URL"),
   flowMode: (process.env.FLOW_MODE === "published" ? "published" : "draft") as "draft" | "published",
+  flowPrivateKeyPem: opcional("PRIVATE_KEY"),
   flowPrivateKeyPath: opcional("FLOW_PRIVATE_KEY_PATH") || "/app/keys/flow_private.pem",
-  flowPrivateKeyPassphrase: opcional("FLOW_PRIVATE_KEY_PASSPHRASE"),
+  flowPrivateKeyPassphrase: opcional("PASSPHRASE") || opcional("FLOW_PRIVATE_KEY_PASSPHRASE"),
   precosPath: process.env.PRECOS_PATH ?? "/app/config/precos.json",
   webOrigins: (process.env.WEB_ORIGINS ?? "http://localhost:4321,http://localhost:5173")
     .split(",")
