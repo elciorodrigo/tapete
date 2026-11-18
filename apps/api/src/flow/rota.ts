@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual, type KeyObject } from "node:crypto";
 import { existsSync } from "node:fs";
 import type { FastifyInstance } from "fastify";
 import { catalogo, catalogoComVersao } from "../catalogo.js";
+import { vincularPedido } from "../clientes.js";
 import { config } from "../config.js";
 import { pool } from "../db.js";
 import { confirmarPedido } from "../whatsapp/avisos.js";
@@ -115,6 +116,7 @@ export async function rotasFlow(app: FastifyInstance): Promise<void> {
     const gravado = await gravarPedido(pool, efeito.pedido, catalogo(), catalogoComVersao().versao.id, sessao.waId);
     const estado: EstadoFluxo = { ...efeito.estado, pedidoNumero: gravado.number, pagamento: efeito.pedido.pagamento };
     await fecharSessao(pool, flowToken, gravado.id, estado);
+    if (normalizarTelefone(sessao.waId)) await vincularPedido(pool, gravado.id, sessao.waId, null);
 
     void confirmarPedido(pool, whatsapp, {
       id: gravado.id,

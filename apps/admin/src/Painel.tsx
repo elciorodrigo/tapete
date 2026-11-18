@@ -1,19 +1,22 @@
 import { useEffect, useState } from "react";
 import { api, type Usuario } from "./api";
 import { Calcular } from "./paginas/Calcular";
+import { Configuracoes } from "./paginas/Configuracoes";
 import { Pedidos } from "./paginas/Pedidos";
 import { Precos } from "./paginas/Precos";
 
 const PAGINAS = [
   { id: "pedidos", nome: "Pedidos" },
-  { id: "precos", nome: "Preços e configurações" },
+  { id: "precos", nome: "Preços" },
   { id: "calcular", nome: "Calcular preço" },
+  { id: "configuracoes", nome: "Configurações" },
 ] as const;
 
 type Pagina = (typeof PAGINAS)[number]["id"];
 
 function paginaDaUrl(): Pagina {
   const h = window.location.hash.slice(1);
+  if (h === "pedidos" || h.startsWith("pedidos/")) return "pedidos";
   return PAGINAS.some((p) => p.id === h) ? (h as Pagina) : "pedidos";
 }
 
@@ -52,9 +55,10 @@ export function Painel({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
       </header>
 
       <main className="painel-conteudo">
-        {pagina === "pedidos" && <Pedidos podeEditar={usuario.role === "admin"} />}
+        {pagina === "pedidos" && <Pedidos />}
         {pagina === "precos" && <Precos podeEditar={usuario.role === "admin"} />}
         {pagina === "calcular" && <Calcular />}
+        {pagina === "configuracoes" && <Configuracoes podeEditar={usuario.role === "admin"} />}
       </main>
     </div>
   );

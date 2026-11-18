@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import { ehStatus, podeMudarStatus } from "@tapete/core";
 import { catalogo } from "../catalogo.js";
 import { pool } from "../db.js";
-import { avisarEtapa, listarMensagens, salvarMensagens } from "../whatsapp/avisos.js";
+import { listarEtapas, salvarEtapas } from "../etapas.js";
+import { avisarEtapa, lerConfirmacao, salvarConfirmacao } from "../whatsapp/avisos.js";
 import { whatsappDaApi } from "../whatsapp/registro.js";
 import { exigirSessao } from "./auth.js";
 
@@ -10,15 +10,20 @@ type Linha = {
   id: string;
   number: string;
   customer_name: string;
+  contato: string | null;
   wa_id: string;
   modality: string;
   payment_method: string | null;
   status: string;
+  etapa_id: string | null;
+  etapa_nome: string | null;
   total_cents: number;
   items: unknown;
   address: unknown;
   created_at: Date;
 };
+
+const TELEFONE = "coalesce(nullif(q.wa_id, 'preview'), c.wa_id, q.wa_id)";
 
 function textoEndereco(address: unknown): string {
   if (!address || typeof address !== "object") return "";
@@ -82,60 +87,80 @@ export async function rotasPedidos(app: FastifyInstance): Promise<void> {
   const whatsapp = whatsappDaApi(app.log);
   app.addHook("onRequest", exigirSessao);
 
-  app.get("/admin/api/mensagens", async () => ({ mensagens: await listarMensagens(pool) }));
+  app.get("/admin/api/configuracoes", async () => ({
+    confirmacao: await lerConfirmacao(pool),
+    etapas: await listarEtapas(pool),
+  }));
 
-  app.put<{ Body: Record<string, unknown> }>("/admin/api/mensagens", async (req, reply) => {
-    if (req.usuario!.role !== "admin") return reply.code(403).send({ erro: "só administradores alteram as mensagens" });
+  app.put<{ Body: { confirmacao?: unknown; etapas?: unknown } }>("/admin/api/configuracoes", async (req, reply) => {
+    if (req.usuario!.role !== "admin") return reply.code(403).send({ erro: "só administradores alteram as configurações" });
     try {
-      return { mensagens: await salvarMensagens(pool, req.body ?? {}) };
+      const confirmacao = await salvarConfirmacao(pool, String(req.body?.confirmacao ?? ""));
+      const etapas = await salvarEtapas(pool, req.body?.etapas);
+      return { confirmacao, etapas };
     } catch (err) {
-      return reply.code(400).send({ erro: err instanceof Error ? err.message : "Mensagem inválida" });
+      return reply.code(400).send({ erro: err instanceof Error ? err.message : "Configuração inválida" });
     }
   });
 
-  app.patch<{ Params: { id: string }; Body: { status?: string } }>("/admin/api/pedidos/:id", async (req, reply) => {
+  app.patch<{ Params: { id: string }; Body: { etapa_id?: number; cancelar?: boolean } }>("/admin/api/pedidos/:id", async (req, reply) => {
     const id = Number(req.params.id);
-    const destino = req.body?.status;
-    if (!Number.isInteger(id) || !ehStatus(destino)) return reply.code(400).send({ erro: "Etapa inválida" });
+    if (!Number.isInteger(id)) return reply.code(400).send({ erro: "Pedido inválido" });
 
     const atual = await pool.query<{ status: string; number: string; wa_id: string; modality: string; total_cents: number }>(
-      "select status, number, wa_id, modality, total_cents from quotes where id = $1",
+      `select q.status, q.number, ${TELEFONE} as wa_id, q.modality, q.total_cents
+         from quotes q
+         left join clientes c on c.id = q.cliente_id
+        where q.id = $1`,
       [id],
     );
     const pedido = atual.rows[0];
     if (!pedido) return reply.code(404).send({ erro: "Pedido não encontrado" });
-    if (!ehStatus(pedido.status) || !podeMudarStatus(pedido.status, destino)) {
-      return reply.code(409).send({ erro: "Essa etapa não é a próxima deste pedido" });
+
+    if (req.body?.cancelar) {
+      await pool.query("update quotes set status = 'CANCELADO', updated_at = now() where id = $1", [id]);
+      await pool.query(
+        `insert into order_events (quote_id, from_status, to_status, user_id, notify, message)
+         values ($1, $2, 'CANCELADO', $3, false, 'Cancelado')`,
+        [id, pedido.status, req.usuario!.id],
+      );
+      return { etapa_id: null, etapa: "Cancelado", cancelado: true, aviso: null };
     }
 
-    const { rowCount } = await pool.query(
-      "update quotes set status = $2, updated_at = now() where id = $1 and status = $3",
-      [id, destino, pedido.status],
-    );
-    if (rowCount !== 1) return reply.code(409).send({ erro: "O pedido mudou. Atualize a lista." });
+    const etapaId = req.body?.etapa_id;
+    if (!Number.isInteger(etapaId)) return reply.code(400).send({ erro: "Escolha uma etapa" });
+    const etapa = (await listarEtapas(pool)).find((e) => e.id === etapaId);
+    if (!etapa) return reply.code(400).send({ erro: "Essa etapa não existe mais" });
 
+    await pool.query("update quotes set etapa_id = $2, status = $3, updated_at = now() where id = $1", [id, etapa.id, etapa.nome]);
     await pool.query(
       `insert into order_events (quote_id, from_status, to_status, user_id, notify, message)
-       values ($1, $2, $3, $4, true, $5)`,
-      [id, pedido.status, destino, req.usuario!.id, destino],
+       values ($1, $2, $3, $4, true, $3)`,
+      [id, pedido.status, etapa.nome, req.usuario!.id],
     );
 
     const aviso = await avisarEtapa(
       pool,
       whatsapp,
       { id, number: pedido.number, waId: pedido.wa_id, modality: pedido.modality, totalCents: pedido.total_cents },
-      destino,
+      etapa.mensagem,
     );
-    return { status: destino, aviso };
+    return { etapa_id: etapa.id, etapa: etapa.nome, cancelado: false, aviso };
   });
 
   app.get<{ Params: { id: string } }>("/admin/api/pedidos/:id", async (req, reply) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return reply.code(400).send({ erro: "Pedido inválido" });
-    const { rows } = await pool.query<Linha & { unit_id: string; period: string | null; subtotal_cents: number; delivery_fee_cents: number; minimum_adjust_cents: number }>(
-      `select id, number, customer_name, wa_id, unit_id, modality, address, period, payment_method,
-              items, subtotal_cents, delivery_fee_cents, minimum_adjust_cents, total_cents, status, created_at
-         from quotes where id = $1`,
+    const { rows } = await pool.query<
+      Linha & { unit_id: string; period: string | null; subtotal_cents: number; delivery_fee_cents: number; minimum_adjust_cents: number }
+    >(
+      `select q.id, q.number, q.customer_name, c.nome as contato, ${TELEFONE} as wa_id, q.unit_id, q.modality,
+              q.address, q.period, q.payment_method, q.items, q.subtotal_cents, q.delivery_fee_cents,
+              q.minimum_adjust_cents, q.total_cents, q.status, q.etapa_id, e.nome as etapa_nome, q.created_at
+         from quotes q
+         left join clientes c on c.id = q.cliente_id
+         left join etapas e on e.id = q.etapa_id
+        where q.id = $1`,
       [id],
     );
     const pedido = rows[0];
@@ -153,6 +178,7 @@ export async function rotasPedidos(app: FastifyInstance): Promise<void> {
       id: Number(pedido.id),
       numero: pedido.number,
       cliente: pedido.customer_name,
+      contato: pedido.contato,
       telefone: pedido.wa_id,
       unidade: unidade?.nome ?? pedido.unit_id,
       modalidade: pedido.modality,
@@ -164,7 +190,10 @@ export async function rotasPedidos(app: FastifyInstance): Promise<void> {
       taxa_cents: pedido.delivery_fee_cents,
       ajuste_cents: pedido.minimum_adjust_cents,
       total_cents: pedido.total_cents,
-      status: pedido.status,
+      etapa_id: pedido.etapa_id == null ? null : Number(pedido.etapa_id),
+      etapa: pedido.status === "CANCELADO" ? "Cancelado" : pedido.etapa_nome || "Novo",
+      cancelado: pedido.status === "CANCELADO",
+      etapas: await listarEtapas(pool),
       criado_em: pedido.created_at.toISOString(),
       eventos: eventos.rows.map((e) => ({
         de: e.from_status,
@@ -177,10 +206,12 @@ export async function rotasPedidos(app: FastifyInstance): Promise<void> {
 
   app.get("/admin/api/pedidos", async () => {
     const { rows } = await pool.query<Linha>(
-      `select id, number, customer_name, wa_id, modality, payment_method, status,
-              total_cents, items, address, created_at
-         from quotes
-        order by id desc
+      `select q.id, q.number, q.customer_name, c.nome as contato, ${TELEFONE} as wa_id, q.modality,
+              q.payment_method, q.status, q.etapa_id, e.nome as etapa_nome, q.total_cents, q.items, q.address, q.created_at
+         from quotes q
+         left join clientes c on c.id = q.cliente_id
+         left join etapas e on e.id = q.etapa_id
+        order by q.id desc
         limit 100`,
     );
     return {
@@ -188,10 +219,13 @@ export async function rotasPedidos(app: FastifyInstance): Promise<void> {
         id: Number(r.id),
         numero: r.number,
         cliente: r.customer_name,
+        contato: r.contato,
         telefone: r.wa_id,
         modalidade: r.modality,
         pagamento: r.payment_method,
-        status: r.status,
+        etapa_id: r.etapa_id == null ? null : Number(r.etapa_id),
+        etapa: r.status === "CANCELADO" ? "Cancelado" : r.etapa_nome || "Novo",
+        cancelado: r.status === "CANCELADO",
         total_cents: r.total_cents,
         criado_em: r.created_at.toISOString(),
         resumo: resumoItens(r.items),

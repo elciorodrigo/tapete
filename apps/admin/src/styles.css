@@ -205,6 +205,309 @@ button:disabled {
   margin-bottom: 6px !important;
 }
 
+.pedido-pagina {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pedido-voltar {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--azul);
+  text-decoration: none;
+}
+
+.pedido-voltar:hover {
+  text-decoration: underline;
+}
+
+.pedido-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.painel-conteudo .pedido-topo h1 {
+  margin: 0;
+  font-size: 32px;
+  letter-spacing: -0.03em;
+}
+
+.pedido-kicker,
+.pedido-sub {
+  margin: 0;
+  color: #5d6e7e;
+  font-size: 14px;
+}
+
+.pedido-sub {
+  margin-top: 6px;
+}
+
+.pedido-topo-valor {
+  text-align: right;
+}
+
+.pedido-topo-valor strong {
+  display: block;
+  color: var(--navy);
+  font-size: 28px;
+  line-height: 1.1;
+}
+
+.pedido-topo-valor > span:first-child {
+  color: #5d6e7e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pedido-topo-valor .pedido-status {
+  margin-top: 8px;
+}
+
+.trilha {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 18px 12px 14px;
+  background: #fff;
+  border: 1px solid #e3e6e8;
+  border-radius: 14px;
+  overflow-x: auto;
+}
+
+.trilha li {
+  position: relative;
+  flex: 1;
+  min-width: 96px;
+  padding-top: 26px;
+  text-align: center;
+  color: #8a97a3;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.trilha li::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #e3e6e8;
+}
+
+.trilha li:first-child::before {
+  left: 50%;
+}
+
+.trilha li:last-child::before {
+  right: 50%;
+}
+
+.trilha li::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border: 2px solid #c9d1da;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.trilha li.feita {
+  color: var(--petroleo);
+}
+
+.trilha li.feita::before,
+.trilha li.atual::before {
+  background: var(--petroleo);
+}
+
+.trilha li.feita::after,
+.trilha li.atual::after {
+  background: var(--petroleo);
+  border-color: var(--petroleo);
+}
+
+.trilha li.atual {
+  color: var(--navy);
+}
+
+.trilha li.atual::after {
+  background: var(--navy);
+  border-color: var(--navy);
+  box-shadow: 0 0 0 4px rgb(1 35 59 / 0.12);
+}
+
+.pedido-cancelado {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fdecea;
+  color: var(--erro);
+  font-weight: 700;
+}
+
+.pedido-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.pedido-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pedido-pessoa {
+  margin: 8px 0 0;
+  color: var(--navy);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.pedido-linha {
+  margin: 12px 0 0;
+}
+
+.pedido-linha span {
+  display: block;
+  margin-bottom: 2px;
+  color: #6b7a89;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.totais {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.totais div {
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  min-width: 220px;
+  color: #3d5163;
+  font-size: 14px;
+}
+
+.totais .total {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #e3e6e8;
+  color: var(--navy);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.aviso-whats {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid #d5e8ef;
+  border-radius: 12px;
+  background: #f4fafc;
+}
+
+.aviso-whats small {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--petroleo);
+  font-weight: 700;
+}
+
+.aviso-whats p {
+  margin: 0;
+}
+
+.pedido-acao button {
+  width: 100%;
+}
+
+.pedido-acao button.botao-perigo {
+  width: auto;
+  margin-top: 12px;
+}
+
+.pedido-ok {
+  margin: 10px 0 0;
+  color: #0f7a4a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.etapa-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #e3e6e8;
+  border-radius: 12px;
+}
+
+.etapa-comandos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.etapa-comandos button,
+.bloco > button.botao-secundario {
+  width: auto;
+  margin-top: 12px;
+  padding: 8px 14px;
+}
+
+.historico {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+}
+
+.historico li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid #f0f2f3;
+  font-size: 14px;
+}
+
+.historico small {
+  color: #6b7a89;
+}
+
+@media (max-width: 860px) {
+  .pedido-grade {
+    grid-template-columns: 1fr;
+  }
+
+  .pedido-topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pedido-topo-valor {
+    text-align: left;
+  }
+}
+
 a.ver-pedido {
   font-weight: 700;
   color: var(--azul);

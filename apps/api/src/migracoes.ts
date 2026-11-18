@@ -150,6 +150,51 @@ const MIGRACOES: { id: string; sql: string }[] = [
       on conflict (key) do nothing;
     `,
   },
+  {
+    id: "006_clientes",
+    sql: `
+      create table clientes (
+        id          bigserial primary key,
+        wa_id       text not null unique,
+        nome        text,
+        created_at  timestamptz not null default now(),
+        updated_at  timestamptz not null default now()
+      );
+
+      alter table quotes add column cliente_id bigint references clientes(id);
+      create index quotes_cliente_id on quotes(cliente_id);
+    `,
+  },
+  {
+    id: "007_etapas",
+    sql: `
+      create table etapas (
+        id        bigserial primary key,
+        nome      text not null,
+        mensagem  text not null default '',
+        posicao   int not null
+      );
+
+      insert into etapas (nome, mensagem, posicao)
+      select 'Coleta agendada', coalesce((select body from message_templates where key = 'coleta'), 'Boas notícias, seu tapete já está selecionado para coleta.'), 1
+      union all
+      select 'Em lavagem', coalesce((select body from message_templates where key = 'lavagem'), 'Oi, passei para te informar que o seu tapete entrou em lavagem.'), 2
+      union all
+      select 'Em secagem', coalesce((select body from message_templates where key = 'secagem'), 'Oi, passei para te informar que o seu tapete entrou em secagem.'), 3
+      union all
+      select 'Em rota de entrega', coalesce((select body from message_templates where key = 'rota'), 'Oi, passei para te informar que o seu tapete está em rota de entrega.'), 4;
+
+      alter table quotes add column etapa_id bigint references etapas(id);
+
+      update quotes q
+         set etapa_id = e.id
+        from etapas e
+       where (q.status = 'COLETA_AGENDADA' and e.posicao = 1)
+          or (q.status in ('COLETADO', 'EM_LAVAGEM') and e.posicao = 2)
+          or (q.status = 'EM_SECAGEM' and e.posicao = 3)
+          or (q.status in ('PRONTO', 'EM_ROTA', 'ENTREGUE') and e.posicao = 4);
+    `,
+  },
 ];
 
 export async function migrar(pool: Pool): Promise<string[]> {

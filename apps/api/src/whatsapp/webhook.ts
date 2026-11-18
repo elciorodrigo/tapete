@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { FastifyBaseLogger, FastifyInstance } from "fastify";
+import { salvarCliente, vincularPedido, vincularPedidoSemTelefone } from "../clientes.js";
 import { config } from "../config.js";
 import { pool } from "../db.js";
 import { confirmarPedido } from "./avisos.js";
@@ -24,15 +25,35 @@ function assinaturaOk(raw: Buffer, header: string | undefined): boolean {
   return recebido.length === esperado.length && timingSafeEqual(recebido, esperado);
 }
 
-async function concluirFlow(waId: string, responseJson: string | undefined, whatsapp: WhatsApp, log: FastifyBaseLogger): Promise<void> {
-  let dados: { flow_token?: string; pedido?: string } = {};
-  if (responseJson) {
-    try {
-      dados = JSON.parse(responseJson) as { flow_token?: string; pedido?: string };
-    } catch {
-      dados = {};
-    }
+function dadosDoFlow(responseJson: string | undefined): { flow_token?: string; pedido?: string } {
+  if (!responseJson) return {};
+  const pedido = responseJson.match(/TP-\d{6}/)?.[0];
+  try {
+    let valor: unknown = JSON.parse(responseJson);
+    if (typeof valor === "string") valor = JSON.parse(valor);
+    if (!valor || typeof valor !== "object") return { pedido };
+    const objeto = valor as Record<string, unknown>;
+    const aninhado = objeto.extension_message_response;
+    const params =
+      aninhado && typeof aninhado === "object" ? (aninhado as { params?: Record<string, unknown> }).params : undefined;
+    const fonte = params ?? objeto;
+    return {
+      flow_token: typeof fonte.flow_token === "string" ? fonte.flow_token : undefined,
+      pedido: typeof fonte.pedido === "string" ? fonte.pedido : pedido,
+    };
+  } catch {
+    return { pedido };
   }
+}
+
+async function concluirFlow(
+  waId: string,
+  nome: string | null,
+  responseJson: string | undefined,
+  whatsapp: WhatsApp,
+  log: FastifyBaseLogger,
+): Promise<void> {
+  const dados = dadosDoFlow(responseJson);
 
   let pedido: Pedido | undefined;
   if (dados.pedido) {
@@ -50,11 +71,17 @@ async function concluirFlow(waId: string, responseJson: string | undefined, what
     pedido = porToken.rows[0];
   }
   if (!pedido) {
-    log.info({ waId }, "flow concluído sem pedido correspondente");
-    return;
+    const orfao = await vincularPedidoSemTelefone(pool, waId, nome);
+    if (!orfao) {
+      log.info({ waId }, "flow concluído sem pedido correspondente");
+      return;
+    }
+    const achado = await pool.query<Pedido>("select id, number, modality, total_cents from quotes where id = $1", [orfao]);
+    pedido = achado.rows[0];
   }
+  if (!pedido) return;
 
-  await pool.query("update quotes set wa_id = $2, updated_at = now() where id = $1", [pedido.id, waId]);
+  await vincularPedido(pool, Number(pedido.id), waId, nome);
   if (dados.flow_token) {
     await pool.query("update flow_sessions set wa_id = $2, updated_at = now() where flow_token = $1", [dados.flow_token, waId]);
   }
@@ -103,26 +130,19 @@ export async function rotasWebhook(app: FastifyInstance): Promise<void> {
         const value = change.value;
         for (const msg of value?.messages ?? []) {
           if (!msg.from || !msg.id) continue;
+          const nome = value?.contacts?.find((c) => c.wa_id === msg.from)?.profile?.name ?? null;
+          await salvarCliente(pool, msg.from, nome);
+
           const novo = await pool.query(
             `insert into inbound_messages (wamid, wa_id, type) values ($1, $2, $3)
              on conflict (wamid) do nothing returning wamid`,
             [msg.id, msg.from, msg.type ?? "desconhecido"],
           );
-          if (novo.rowCount !== 1) continue;
-
-          const nome = value?.contacts?.find((c) => c.wa_id === msg.from)?.profile?.name ?? null;
-          await pool.query(
-            `insert into contacts (wa_id, profile_name, last_inbound_at)
-             values ($1, $2, now())
-             on conflict (wa_id) do update
-               set profile_name = coalesce(excluded.profile_name, contacts.profile_name),
-                   last_inbound_at = now(),
-                   updated_at = now()`,
-            [msg.from, nome],
-          );
 
           if (msg.interactive?.type === "nfm_reply") {
-            await concluirFlow(msg.from, msg.interactive.nfm_reply?.response_json, whatsapp, app.log);
+            await concluirFlow(msg.from, nome, msg.interactive.nfm_reply?.response_json, whatsapp, app.log);
+          } else if (novo.rowCount === 1) {
+            await vincularPedidoSemTelefone(pool, msg.from, nome);
           }
         }
       }
